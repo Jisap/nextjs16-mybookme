@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { trialStatus } from "@/features/billing/trial";
 import { StatusButtons } from "./status-buttons";
 import { DashboardNav } from "./nav";
-import { BusinessBar } from "./business-bar";
+import { DashboardKpiCards } from "./kpi-cards";
+import { QuickShareBar } from "./quick-share-bar";
 
 const ESTADOS = ["TODAS", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"] as const;
 type EstadoFiltro = (typeof ESTADOS)[number];
@@ -74,17 +75,37 @@ export default async function DashboardPage({
     startAt: { gte: new Date(`${todayStr}T00:00:00Z`) },
     ...statusWhere,
   };
-  const [total, serviceCount, staffCount, hoursCount, counts] = await Promise.all([
+  const todayStart = new Date(`${todayStr}T00:00:00Z`);
+  const todayEnd = new Date(new Date(`${todayStr}T00:00:00Z`).getTime() + 86400000);
+
+  const [total, serviceCount, staffCount, hoursCount, counts, todayAppts] = await Promise.all([
     prisma.appointment.count({ where: listWhere }),
     prisma.service.count({ where: { businessId: business.id, active: true } }),
     prisma.staff.count({ where: { businessId: business.id, active: true } }),
     prisma.workingHours.count({ where: { businessId: business.id } }),
     prisma.appointment.groupBy({
       by: ["status"],
-      where: { businessId: business.id, startAt: { gte: new Date(`${todayStr}T00:00:00Z`) } },
+      where: { businessId: business.id, startAt: { gte: todayStart } },
       _count: true,
     }),
+    prisma.appointment.findMany({
+      where: {
+        businessId: business.id,
+        startAt: { gte: todayStart, lt: todayEnd },
+      },
+      include: { service: true },
+    }),
   ]);
+
+  // KPI Calculations
+  const todayTotal = todayAppts.length;
+  const todayCompleted = todayAppts.filter((a) => a.status === "COMPLETED").length;
+  const todayPending = todayAppts.filter((a) => a.status === "PENDING" || a.status === "CONFIRMED").length;
+  const todayRevenueCents = todayAppts
+    .filter((a) => a.status !== "CANCELLED" && a.status !== "NO_SHOW")
+    .reduce((acc, a) => acc + (a.service?.priceCents || 0), 0);
+  const primaryCurrency = todayAppts[0]?.service?.currency || "EUR";
+
   const setupDone = serviceCount > 0 && staffCount > 0 && hoursCount > 0;
   const trial = trialStatus(business);
   const billingQ = `/dashboard/billing?businessId=${business.id}`;
@@ -139,15 +160,42 @@ export default async function DashboardPage({
     <main style={{ maxWidth: "860px", margin: "0 auto", padding: "1.5rem 1.25rem 4rem" }}>
 
       {/* Page header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
         <h1 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.4rem", color: "hsl(220 15% 12%)" }}>
           {business.name}
           <span style={{ color: "hsl(220 10% 55%)", fontWeight: 400, fontSize: "1rem", marginLeft: "0.5rem" }}>— próximas citas</span>
         </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem", color: "hsl(220 10% 50%)" }}>
+          <span
+            style={{
+              borderRadius: "9999px",
+              padding: "0.2rem 0.6rem",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              background: membership.role === "OWNER" ? "hsl(220 15% 15%)" : "hsl(220 15% 92%)",
+              color: membership.role === "OWNER" ? "#fff" : "hsl(220 15% 25%)",
+            }}
+          >
+            {membership.role === "OWNER" ? "Propietario" : "Personal"}
+          </span>
+          <span className="hidden sm:inline">{data.user.email}</span>
+        </div>
       </div>
 
-      <BusinessBar role={membership.role} userEmail={data.user.email} slug={business.slug} />
       <DashboardNav businessId={business.id} slug={business.slug} current="citas" />
+
+      {/* Quick Share Link & WhatsApp bar */}
+      <QuickShareBar slug={business.slug} businessName={business.name} />
+
+      {/* KPI Stats Cards */}
+      <DashboardKpiCards
+        todayTotal={todayTotal}
+        todayCompleted={todayCompleted}
+        todayPending={todayPending}
+        todayRevenueCents={todayRevenueCents}
+        upcomingTotal={total}
+        currency={primaryCurrency}
+      />
 
       {/* Trial expired banner */}
       {trial.state === "EXPIRED" && (
@@ -244,13 +292,27 @@ export default async function DashboardPage({
 
       {/* No appointments */}
       {appts.length === 0 && (
-        <p style={{ fontSize: "0.9rem", color: "hsl(220 10% 50%)", padding: "1rem 0" }}>
-          {estado === "TODAS" ? "Sin citas próximas." : (
-            <>{`Sin citas ${ESTADO_LABEL[estado as keyof typeof ESTADO_LABEL].toLowerCase()}s.`}{" "}
-              <Link href={estadoQ("TODAS")} style={{ color: "hsl(252 70% 55%)", textDecoration: "none" }}>Ver todas →</Link>
-            </>
+        <div className="bg-white border border-neutral-200/90 rounded-2xl p-8 text-center my-4 shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto mb-3 text-xl">
+            📅
+          </div>
+          <h3 className="font-bold text-neutral-800 text-base mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            {estado === "TODAS" ? "No hay citas programadas" : `Sin citas ${ESTADO_LABEL[estado as keyof typeof ESTADO_LABEL].toLowerCase()}s`}
+          </h3>
+          <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-4">
+            {estado === "TODAS" 
+              ? "Comparte tu enlace de reservas en redes sociales o envíalo a tus clientes por WhatsApp para recibir reservas."
+              : "No tienes citas con este estado actualmente."}
+          </p>
+          {estado !== "TODAS" && (
+            <Link 
+              href={estadoQ("TODAS")} 
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
+            >
+              Ver todas las citas →
+            </Link>
           )}
-        </p>
+        </div>
       )}
 
       {/* Appointment list */}
@@ -328,7 +390,14 @@ export default async function DashboardPage({
                           }}>
                             {ESTADO_LABEL[a.status as keyof typeof ESTADO_LABEL]}
                           </span>
-                          <StatusButtons id={a.id} />
+                          <StatusButtons 
+                            id={a.id} 
+                            currentStatus={a.status}
+                            customerPhone={a.customer.phone}
+                            customerName={a.customer.name}
+                            serviceName={a.service.name}
+                            startTime={hourFmt.format(a.startAt)}
+                          />
                         </div>
                       </div>
                     </li>

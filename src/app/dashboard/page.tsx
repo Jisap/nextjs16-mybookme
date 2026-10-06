@@ -8,6 +8,8 @@ import { StatusButtons } from "./status-buttons";
 import { DashboardNav } from "./nav";
 import { DashboardKpiCards } from "./kpi-cards";
 import { QuickShareBar } from "./quick-share-bar";
+import { AppointmentsFilterBar } from "./appointments-filter-bar";
+import { CreateAppointmentModal } from "./create-appointment-modal";
 
 const ESTADOS = ["TODAS", "PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"] as const;
 type EstadoFiltro = (typeof ESTADOS)[number];
@@ -23,7 +25,7 @@ const ESTADO_LABEL: Record<Exclude<EstadoFiltro, "TODAS">, string> = {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ businessId?: string; estado?: string; pagina?: string }>;
+  searchParams: Promise<{ businessId?: string; estado?: string; pagina?: string; q?: string; staffId?: string }>;
 }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -56,32 +58,73 @@ export default async function DashboardPage({
   const sp = await searchParams;
   const membership = memberships.find((m) => m.businessId === sp.businessId) ?? memberships[0];
   const business = membership.business;
-  const q = `?businessId=${business.id}`;
+  const qStr = (sp.q ?? "").trim();
+  const staffFilter = (sp.staffId ?? "").trim();
+
   const estado: EstadoFiltro = (ESTADOS as readonly string[]).includes(sp.estado ?? "")
     ? (sp.estado as EstadoFiltro)
     : "TODAS";
-  const estadoQ = (e: EstadoFiltro) =>
-    `/dashboard?businessId=${business.id}${e === "TODAS" ? "" : `&estado=${e}`}`;
+
   const PAGE_SIZE = 20;
   const pagina = Math.max(1, Number.parseInt(sp.pagina ?? "1", 10) || 1);
-  const pageQ = (p: number) =>
-    `/dashboard?businessId=${business.id}${estado === "TODAS" ? "" : `&estado=${estado}`}${p <= 1 ? "" : `&pagina=${p}`}`;
   const todayStr = formatInTimeZone(new Date(), business.timezone, "yyyy-MM-dd");
+
+  const buildQueryUrl = (newParams: Record<string, string | number | undefined>) => {
+    const current: Record<string, string> = { businessId: business.id };
+    if (estado !== "TODAS") current.estado = estado;
+    if (qStr) current.q = qStr;
+    if (staffFilter) current.staffId = staffFilter;
+    if (pagina > 1) current.pagina = String(pagina);
+
+    for (const [k, v] of Object.entries(newParams)) {
+      if (v === undefined || v === "" || v === "TODAS") {
+        delete current[k];
+      } else {
+        current[k] = String(v);
+      }
+    }
+    const search = new URLSearchParams(current).toString();
+    return `/dashboard${search ? `?${search}` : ""}`;
+  };
+
+  const estadoQ = (e: EstadoFiltro) => buildQueryUrl({ estado: e, pagina: 1 });
+  const pageQ = (p: number) => buildQueryUrl({ pagina: p });
 
   const statusWhere =
     estado === "TODAS" ? undefined : { status: estado as keyof typeof ESTADO_LABEL };
+  const staffWhere = staffFilter ? { staffId: staffFilter } : undefined;
+  const searchWhere = qStr
+    ? {
+        OR: [
+          { customer: { name: { contains: qStr, mode: "insensitive" as const } } },
+          { customer: { phone: { contains: qStr, mode: "insensitive" as const } } },
+          { customer: { email: { contains: qStr, mode: "insensitive" as const } } },
+        ],
+      }
+    : undefined;
+
   const listWhere = {
     businessId: business.id,
     startAt: { gte: new Date(`${todayStr}T00:00:00Z`) },
     ...statusWhere,
+    ...staffWhere,
+    ...searchWhere,
   };
   const todayStart = new Date(`${todayStr}T00:00:00Z`);
   const todayEnd = new Date(new Date(`${todayStr}T00:00:00Z`).getTime() + 86400000);
 
-  const [total, serviceCount, staffCount, hoursCount, counts, todayAppts] = await Promise.all([
+  const [total, activeServices, activeStaff, hoursCount, counts, todayAppts] = await Promise.all([
     prisma.appointment.count({ where: listWhere }),
-    prisma.service.count({ where: { businessId: business.id, active: true } }),
-    prisma.staff.count({ where: { businessId: business.id, active: true } }),
+    prisma.service.findMany({
+      where: { businessId: business.id, active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, durationMinutes: true, priceCents: true, currency: true },
+    }),
+    prisma.staff.findMany({
+      where: { businessId: business.id, active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
     prisma.workingHours.count({ where: { businessId: business.id } }),
     prisma.appointment.groupBy({
       by: ["status"],
@@ -96,6 +139,9 @@ export default async function DashboardPage({
       include: { service: true },
     }),
   ]);
+
+  const serviceCount = activeServices.length;
+  const staffCount = activeStaff.length;
 
   // KPI Calculations
   const todayTotal = todayAppts.length;
@@ -160,25 +206,34 @@ export default async function DashboardPage({
     <main style={{ maxWidth: "860px", margin: "0 auto", padding: "1.5rem 1.25rem 4rem" }}>
 
       {/* Page header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
         <h1 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.4rem", color: "hsl(220 15% 12%)" }}>
           {business.name}
-          <span style={{ color: "hsl(220 10% 55%)", fontWeight: 400, fontSize: "1rem", marginLeft: "0.5rem" }}>— próximas citas</span>
+          <span style={{ color: "hsl(220 10% 55%)", fontWeight: 400, fontSize: "1rem", marginLeft: "0.5rem" }}>— citas</span>
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem", color: "hsl(220 10% 50%)" }}>
-          <span
-            style={{
-              borderRadius: "9999px",
-              padding: "0.2rem 0.6rem",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              background: membership.role === "OWNER" ? "hsl(220 15% 15%)" : "hsl(220 15% 92%)",
-              color: membership.role === "OWNER" ? "#fff" : "hsl(220 15% 25%)",
-            }}
-          >
-            {membership.role === "OWNER" ? "Propietario" : "Personal"}
-          </span>
-          <span className="hidden sm:inline">{data.user.email}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          {/* Modal para agendar cita manual */}
+          <CreateAppointmentModal
+            businessId={business.id}
+            services={activeServices}
+            staffList={activeStaff}
+          />
+
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem", color: "hsl(220 10% 50%)" }}>
+            <span
+              style={{
+                borderRadius: "9999px",
+                padding: "0.2rem 0.6rem",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                background: membership.role === "OWNER" ? "hsl(220 15% 15%)" : "hsl(220 15% 92%)",
+                color: membership.role === "OWNER" ? "#fff" : "hsl(220 15% 25%)",
+              }}
+            >
+              {membership.role === "OWNER" ? "Propietario" : "Personal"}
+            </span>
+            <span className="hidden sm:inline">{data.user.email}</span>
+          </div>
         </div>
       </div>
 
@@ -266,9 +321,9 @@ export default async function DashboardPage({
           </p>
           <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem", listStyle: "none", padding: 0 }}>
             {[
-              { done: serviceCount > 0, label: "Crea al menos un servicio", href: `/dashboard/services${q}`, link: "ir a Servicios" },
-              { done: staffCount > 0,   label: "Añade al menos un profesional", href: `/dashboard/staff${q}`, link: "ir a Profesionales" },
-              { done: hoursCount > 0,   label: "Revisa tu horario", href: `/dashboard/schedule${q}`, link: "ir a Horarios" },
+              { done: serviceCount > 0, label: "Crea al menos un servicio", href: `/dashboard/services?businessId=${business.id}`, link: "ir a Servicios" },
+              { done: staffCount > 0,   label: "Añade al menos un profesional", href: `/dashboard/staff?businessId=${business.id}`, link: "ir a Profesionales" },
+              { done: hoursCount > 0,   label: "Revisa tu horario", href: `/dashboard/schedule?businessId=${business.id}`, link: "ir a Horarios" },
             ].map((item) => (
               <li key={item.label} style={{ display: "flex", alignItems: "center", gap: "0.625rem", fontSize: "0.875rem" }}>
                 <span style={{
@@ -290,6 +345,14 @@ export default async function DashboardPage({
         </div>
       )}
 
+      {/* Search and Staff filter bar */}
+      <AppointmentsFilterBar
+        businessId={business.id}
+        currentQuery={qStr}
+        staffList={activeStaff}
+        currentStaffId={staffFilter}
+      />
+
       {/* No appointments */}
       {appts.length === 0 && (
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-8 text-center my-4 shadow-xs">
@@ -297,19 +360,25 @@ export default async function DashboardPage({
             📅
           </div>
           <h3 className="font-bold text-neutral-800 text-base mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
-            {estado === "TODAS" ? "No hay citas programadas" : `Sin citas ${ESTADO_LABEL[estado as keyof typeof ESTADO_LABEL].toLowerCase()}s`}
+            {qStr || staffFilter
+              ? "No se encontraron citas con los filtros aplicados"
+              : estado === "TODAS"
+              ? "No hay citas programadas"
+              : `Sin citas ${ESTADO_LABEL[estado as keyof typeof ESTADO_LABEL].toLowerCase()}s`}
           </h3>
           <p className="text-sm text-neutral-500 max-w-sm mx-auto mb-4">
-            {estado === "TODAS" 
+            {qStr || staffFilter
+              ? `Intenta cambiar o limpiar el término de búsqueda "${qStr || ""}" o el filtro de profesional.`
+              : estado === "TODAS"
               ? "Comparte tu enlace de reservas en redes sociales o envíalo a tus clientes por WhatsApp para recibir reservas."
               : "No tienes citas con este estado actualmente."}
           </p>
-          {estado !== "TODAS" && (
+          {(estado !== "TODAS" || qStr || staffFilter) && (
             <Link 
-              href={estadoQ("TODAS")} 
+              href={`/dashboard?businessId=${business.id}`} 
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
             >
-              Ver todas las citas →
+              Restablecer todos los filtros →
             </Link>
           )}
         </div>

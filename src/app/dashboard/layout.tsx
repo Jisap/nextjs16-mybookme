@@ -5,7 +5,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   return (
-    <div className="min-h-screen">
+    <div className="page-light dash-surface">
       <TopBar email={data.user?.email ?? null} />
       {children}
     </div>

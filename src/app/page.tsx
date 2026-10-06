@@ -72,15 +72,15 @@ const clientSteps = [
 
 const stats = [
   { value: "2 min", label: "para estar operativo" },
-  { value: "0€", label: "coste de arranque" },
-  { value: "24/7", label: "disponible para tus clientes" },
+  { value: "30 días", label: "de prueba gratis" },
+  { value: "29$/mes", label: "sin permanencia" },
   { value: "∞", label: "reservas incluidas" },
 ];
 
 /* ═══════════════════════════════════════════════════════════ */
 export default function Home() {
   return (
-    <>
+    <div className="page-dark">
       {/* Animated background mesh */}
       <div className="bg-mesh" aria-hidden="true" />
 
@@ -112,7 +112,7 @@ export default function Home() {
         {/* ── Hero ── */}
         <section aria-labelledby="hero-h" style={{ textAlign: "center", padding: "6rem 0 4rem" }}>
           <div className="fade-up fade-up-1" style={{ marginBottom: "1.5rem" }}>
-            <span className="pill"><IconStar /> Gratis para siempre · Sin tarjeta de crédito</span>
+            <span className="pill"><IconStar /> 30 días gratis · Después solo 29$/mes</span>
           </div>
           <h1 id="hero-h" className="fade-up fade-up-2" style={{
             fontFamily: "'Outfit', sans-serif", fontWeight: 900,
@@ -236,19 +236,100 @@ export default function Home() {
 
         <div className="divider-glow" style={{ marginBottom: "5rem" }} />
 
+        {/* ── Pricing ── */}
+        <section aria-labelledby="pricing-h" style={{ marginBottom: "5rem" }}>
+          <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+            <h2 id="pricing-h" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "clamp(1.75rem, 3vw, 2.5rem)", marginBottom: "0.75rem" }}>
+              Precios <span className="text-gradient">sin sorpresas</span>
+            </h2>
+            <p style={{ color: "var(--text-secondary)", maxWidth: "480px", margin: "0 auto" }}>
+              Gratis para siempre si eres cliente que reserva. Para dueños de negocio, prueba sin compromiso.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", maxWidth: "780px", margin: "0 auto" }}>
+
+            {/* Card clientes */}
+            <div className="glass" style={{ padding: "2.25rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div>
+                <span className="pill" style={{ marginBottom: "0.75rem", display: "inline-flex" }}>Para clientes</span>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "2.75rem", lineHeight: 1, color: "var(--text-primary)", marginBottom: "0.25rem" }}>
+                  0$
+                </p>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Siempre gratis · Sin registro</p>
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {["Reserva sin crear cuenta", "Confirmación por email", "Añadir al calendario", "Cancelación online"].map((f) => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                    <span style={{ color: "hsl(252 95% 78%)" }}><IconCheck /></span> {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/book/maria-nails" className="btn-outline-glass" style={{ textAlign: "center", justifyContent: "center", marginTop: "auto" }}>Ver demo de reserva</Link>
+            </div>
+
+            {/* Card negocios — destacada */}
+            <div className="glass" style={{
+              padding: "2.25rem", display: "flex", flexDirection: "column", gap: "1.25rem",
+              border: "1px solid hsl(252 75% 57% / 0.45)",
+              boxShadow: "0 0 40px hsl(252 75% 57% / 0.15), 0 0 0 1px hsl(252 75% 57% / 0.2)",
+              position: "relative", overflow: "hidden",
+            }}>
+              <div aria-hidden="true" style={{ position: "absolute", top: "-40px", right: "-40px", width: "180px", height: "180px", borderRadius: "9999px", background: "radial-gradient(circle, hsl(252 75% 57% / 0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
+              {/* Más popular badge */}
+              <span style={{
+                position: "absolute", top: "1.25rem", right: "1.25rem",
+                background: "linear-gradient(135deg, var(--brand-500), var(--accent-500))",
+                color: "#fff", fontSize: "0.7rem", fontWeight: 700, padding: "0.2rem 0.65rem",
+                borderRadius: "9999px", letterSpacing: "0.04em", textTransform: "uppercase",
+              }}>Más popular</span>
+              <div>
+                <span className="pill" style={{ marginBottom: "0.75rem", display: "inline-flex" }}>Para negocios</span>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "0.4rem", marginBottom: "0.1rem" }}>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "2.75rem", lineHeight: 1, color: "var(--text-primary)" }}>29$</p>
+                  <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", paddingBottom: "0.35rem" }}>/mes</p>
+                </div>
+                <p style={{ color: "hsl(252 95% 78%)", fontSize: "0.85rem", fontWeight: 600 }}>30 días de prueba gratis · Sin tarjeta</p>
+              </div>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                {[
+                  "URL propia /book/tu-negocio",
+                  "Servicios y profesionales ilimitados",
+                  "Calendario de gestión de citas",
+                  "Emails de confirmación y recordatorio",
+                  "Sin comisiones por reserva",
+                  "Cancela cuando quieras",
+                ].map((f) => (
+                  <li key={f} style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                    <span style={{ color: "hsl(252 95% 78%)" }}><IconCheck /></span> {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/onboarding" className="btn-glow" style={{ textAlign: "center", justifyContent: "center", marginTop: "auto" }}>
+                Empezar prueba gratis <IconArrow />
+              </Link>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.75rem", textAlign: "center", marginTop: "-0.5rem" }}>Sin permanencia · Cancela en cualquier momento</p>
+            </div>
+
+          </div>
+        </section>
+
+        <div className="divider-glow" style={{ marginBottom: "5rem" }} />
+
         {/* ── CTA final ── */}
         <section aria-labelledby="cta-h" style={{ textAlign: "center", padding: "3rem 1rem" }}>
           <div className="glass" style={{ padding: "3.5rem 2rem", position: "relative", overflow: "hidden" }}>
             <div aria-hidden="true" style={{ position: "absolute", top: "-60px", right: "-60px", width: "300px", height: "300px", borderRadius: "9999px", background: "radial-gradient(circle, hsl(252 75% 57% / 0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
             <div aria-hidden="true" style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "250px", height: "250px", borderRadius: "9999px", background: "radial-gradient(circle, hsl(320 75% 55% / 0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
             <h2 id="cta-h" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "clamp(1.75rem, 4vw, 3rem)", marginBottom: "1rem", lineHeight: 1.15 }}>
-              Empieza hoy. <span className="text-gradient">Es gratis.</span>
+              30 días gratis.{" "}
+              <span className="text-gradient">Sin compromisos.</span>
             </h2>
             <p style={{ color: "var(--text-secondary)", maxWidth: "440px", margin: "0 auto 2.25rem", lineHeight: 1.6 }}>
-              Sin tarjeta de crédito. Sin límite de reservas. Sin comisiones ocultas.
+              Prueba MyBookMe durante 30 días sin coste. Si te convence, sigue por solo 29$/mes. Si no, cancela sin preguntas.
             </p>
             <ul style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1.25rem", marginBottom: "2.25rem", listStyle: "none", padding: 0 }}>
-              {["Configuración en 2 minutos", "Sin pagos online", "Clientes sin cuenta", "Cancelación gratuita"].map((item) => (
+              {["Sin tarjeta de crédito", "Configuración en 2 minutos", "Clientes sin cuenta", "Cancela cuando quieras"].map((item) => (
                 <li key={item} style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
                   <span style={{ color: "hsl(252 95% 78%)" }}><IconCheck /></span> {item}
                 </li>
@@ -256,7 +337,7 @@ export default function Home() {
             </ul>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1rem" }}>
               <Link href="/onboarding" className="btn-glow" style={{ fontSize: "1.05rem", padding: "0.9rem 2.25rem" }}>
-                Crear mi negocio gratis <IconArrow />
+                Empezar prueba gratis <IconArrow />
               </Link>
               <Link href="/book/maria-nails" className="btn-outline-glass" style={{ fontSize: "1.05rem", padding: "0.9rem 2.25rem" }}>
                 Probar la demo
@@ -275,6 +356,6 @@ export default function Home() {
           <Link href="/onboarding" style={{ color: "hsl(252 95% 78%)", textDecoration: "none" }}>Crear negocio</Link>
         </p>
       </footer>
-    </>
+    </div>
   );
 }

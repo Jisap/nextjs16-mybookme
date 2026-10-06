@@ -3,7 +3,6 @@ import Link from "next/link";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trialStatus } from "@/features/billing/trial";
 import { StatusButtons } from "./status-buttons";
 import { DashboardNav } from "./nav";
@@ -127,182 +126,228 @@ export default async function DashboardPage({
     timeZone: business.timezone,
   });
 
+  /* ── helpers ── */
+  const statusColor: Record<string, { bg: string; text: string }> = {
+    PENDING:   { bg: "hsl(45 95% 93%)",  text: "hsl(35 80% 35%)"  },
+    CONFIRMED: { bg: "hsl(142 70% 90%)", text: "hsl(142 60% 25%)" },
+    COMPLETED: { bg: "hsl(220 20% 92%)", text: "hsl(220 15% 35%)" },
+    CANCELLED: { bg: "hsl(0 80% 93%)",   text: "hsl(0 65% 35%)"   },
+    NO_SHOW:   { bg: "hsl(280 60% 92%)", text: "hsl(280 50% 35%)" },
+  };
+
   return (
-    <main className="mx-auto max-w-2xl space-y-4 p-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">{business.name} — próximas citas</h1>
-      </header>
+    <main style={{ maxWidth: "860px", margin: "0 auto", padding: "1.5rem 1.25rem 4rem" }}>
+
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.4rem", color: "hsl(220 15% 12%)" }}>
+          {business.name}
+          <span style={{ color: "hsl(220 10% 55%)", fontWeight: 400, fontSize: "1rem", marginLeft: "0.5rem" }}>— próximas citas</span>
+        </h1>
+      </div>
+
       <BusinessBar role={membership.role} userEmail={data.user.email} slug={business.slug} />
       <DashboardNav businessId={business.id} slug={business.slug} current="citas" />
+
+      {/* Trial expired banner */}
       {trial.state === "EXPIRED" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tu prueba terminó</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              Tus datos están a salvo, pero tu página ya no acepta reservas. Suscríbete para volver
-              a recibirlas.
-            </p>
-            <Link href={billingQ} className="underline">
-              Ir a Facturación →
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-      {trial.state === "TRIAL" && (
-        <p className="text-sm text-neutral-600">
-          Prueba gratuita: te quedan {trial.daysLeft} días.{" "}
-          <Link href={billingQ} className="underline">
-            Ver Facturación
+        <div style={{
+          background: "hsl(0 80% 97%)", border: "1px solid hsl(0 70% 88%)",
+          borderRadius: "0.75rem", padding: "1rem 1.25rem", marginBottom: "1rem",
+        }}>
+          <p style={{ fontWeight: 600, color: "hsl(0 65% 35%)", marginBottom: "0.25rem" }}>Tu prueba terminó</p>
+          <p style={{ fontSize: "0.875rem", color: "hsl(0 50% 45%)", marginBottom: "0.5rem" }}>
+            Tus datos están a salvo, pero tu página ya no acepta reservas. Suscríbete para volver a recibirlas.
+          </p>
+          <Link href={billingQ} style={{ fontSize: "0.875rem", fontWeight: 600, color: "hsl(252 70% 55%)", textDecoration: "none" }}>
+            Ir a Facturación →
           </Link>
-        </p>
+        </div>
       )}
+
+      {/* Trial banner */}
+      {trial.state === "TRIAL" && (
+        <div style={{
+          background: "hsl(252 85% 97%)", border: "1px solid hsl(252 75% 88%)",
+          borderRadius: "0.75rem", padding: "0.75rem 1.25rem", marginBottom: "1rem",
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem",
+        }}>
+          <p style={{ fontSize: "0.875rem", color: "hsl(252 50% 40%)" }}>
+            ✦ Prueba gratuita: te quedan <strong>{trial.daysLeft} días</strong>.
+          </p>
+          <Link href={billingQ} style={{ fontSize: "0.8rem", fontWeight: 600, color: "hsl(252 70% 55%)", textDecoration: "none", whiteSpace: "nowrap" }}>
+            Ver Facturación →
+          </Link>
+        </div>
+      )}
+
+      {/* Multi-business selector */}
       {memberships.length > 1 && (
-        <nav className="flex flex-wrap gap-2 text-sm" aria-label="Mis negocios">
+        <nav style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }} aria-label="Mis negocios">
           {memberships.map((m) => (
             <Link
               key={m.businessId}
               href={`/dashboard?businessId=${m.businessId}`}
               aria-current={m.businessId === business.id ? "page" : undefined}
-              className={`rounded border px-2 py-1 ${m.businessId === business.id ? "border-black bg-gray-50 font-medium" : ""}`}
+              style={{
+                padding: "0.3rem 0.85rem", fontSize: "0.8rem", fontWeight: 500,
+                borderRadius: "9999px", textDecoration: "none",
+                border: "1px solid",
+                ...(m.businessId === business.id
+                  ? { background: "hsl(252 75% 57%)", color: "#fff", borderColor: "transparent" }
+                  : { background: "#fff", color: "hsl(220 15% 30%)", borderColor: "hsl(220 15% 88%)" }),
+              }}
             >
               {m.business.name}
             </Link>
           ))}
         </nav>
       )}
+
+      {/* Setup checklist */}
       {!setupDone && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Configura tu negocio</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p className="text-neutral-600">
-              Tu página pública es <code>/book/{business.slug}</code>, pero aún no puede recibir
-              reservas. Completa estos pasos:
-            </p>
-            <ul className="space-y-1">
-              <li>
-                {serviceCount > 0 ? "✓" : "○"} Crea al menos un servicio (
-                <Link href={`/dashboard/services${q}`} className="underline">
-                  ir a Servicios
-                </Link>
-                )
+        <div style={{
+          background: "#fff", border: "1px solid hsl(220 15% 88%)",
+          borderRadius: "0.875rem", padding: "1.25rem",
+          boxShadow: "0 1px 4px hsl(220 15% 15% / 0.06)",
+          marginBottom: "1.25rem",
+        }}>
+          <p style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "0.5rem" }}>Configura tu negocio</p>
+          <p style={{ fontSize: "0.875rem", color: "hsl(220 10% 50%)", marginBottom: "0.75rem" }}>
+            Tu página pública es <code style={{ background: "hsl(220 20% 95%)", padding: "0.1rem 0.4rem", borderRadius: "0.3rem", fontSize: "0.8rem" }}>/book/{business.slug}</code>, pero aún no puede recibir reservas. Completa estos pasos:
+          </p>
+          <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem", listStyle: "none", padding: 0 }}>
+            {[
+              { done: serviceCount > 0, label: "Crea al menos un servicio", href: `/dashboard/services${q}`, link: "ir a Servicios" },
+              { done: staffCount > 0,   label: "Añade al menos un profesional", href: `/dashboard/staff${q}`, link: "ir a Profesionales" },
+              { done: hoursCount > 0,   label: "Revisa tu horario", href: `/dashboard/schedule${q}`, link: "ir a Horarios" },
+            ].map((item) => (
+              <li key={item.label} style={{ display: "flex", alignItems: "center", gap: "0.625rem", fontSize: "0.875rem" }}>
+                <span style={{
+                  width: "1.25rem", height: "1.25rem", borderRadius: "9999px", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700,
+                  ...(item.done
+                    ? { background: "hsl(142 70% 90%)", color: "hsl(142 60% 25%)" }
+                    : { background: "hsl(220 20% 93%)", color: "hsl(220 10% 50%)" }),
+                }}>
+                  {item.done ? "✓" : "○"}
+                </span>
+                <span style={{ color: item.done ? "hsl(220 10% 55%)" : "hsl(220 15% 20%)" }}>
+                  {item.label}
+                  {!item.done && <> · <Link href={item.href} style={{ color: "hsl(252 70% 55%)", textDecoration: "none", fontWeight: 500 }}>{item.link}</Link></>}
+                </span>
               </li>
-              <li>
-                {staffCount > 0 ? "✓" : "○"} Añade al menos un profesional (
-                <Link href={`/dashboard/staff${q}`} className="underline">
-                  ir a Profesionales
-                </Link>
-                )
-              </li>
-              <li>
-                {hoursCount > 0 ? "✓" : "○"} Revisa tu horario (
-                <Link href={`/dashboard/schedule${q}`} className="underline">
-                  ir a Horarios
-                </Link>
-                )
-              </li>
-              <li>
-                ○ Asocia profesionales a servicios (en Servicios, cada servicio elige quién lo hace)
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+            ))}
+          </ul>
+        </div>
       )}
+
+      {/* No appointments */}
       {appts.length === 0 && (
-        <p className="text-sm text-gray-600">
-          {estado === "TODAS" ? (
-            "Sin citas próximas."
-          ) : (
-            <>
-              {`Sin citas ${ESTADO_LABEL[estado].toLowerCase()}s.`}{" "}
-              <Link href={estadoQ("TODAS")} className="underline">
-                Ver todas →
-              </Link>
+        <p style={{ fontSize: "0.9rem", color: "hsl(220 10% 50%)", padding: "1rem 0" }}>
+          {estado === "TODAS" ? "Sin citas próximas." : (
+            <>{`Sin citas ${ESTADO_LABEL[estado as keyof typeof ESTADO_LABEL].toLowerCase()}s.`}{" "}
+              <Link href={estadoQ("TODAS")} style={{ color: "hsl(252 70% 55%)", textDecoration: "none" }}>Ver todas →</Link>
             </>
           )}
         </p>
       )}
+
+      {/* Appointment list */}
       {appts.length > 0 && (
-        <section aria-label="Próximas citas" className="space-y-4">
-          <nav className="flex flex-wrap gap-1 text-xs" aria-label="Filtrar por estado">
+        <section aria-label="Próximas citas" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {/* Status filter pills */}
+          <nav style={{ display: "flex", flexWrap: "wrap", gap: "0.375rem" }} aria-label="Filtrar por estado">
             {ESTADOS.map((e) => (
               <Link
                 key={e}
                 href={estadoQ(e)}
                 aria-current={e === estado ? "page" : undefined}
-                className={`rounded-full border px-2 py-1 ${e === estado ? "border-black bg-neutral-900 font-medium text-white" : ""}`}
+                style={{
+                  padding: "0.3rem 0.85rem", fontSize: "0.78rem", fontWeight: 500,
+                  borderRadius: "9999px", textDecoration: "none", border: "1px solid",
+                  ...(e === estado
+                    ? { background: "hsl(220 15% 15%)", color: "#fff", borderColor: "transparent" }
+                    : { background: "#fff", color: "hsl(220 15% 35%)", borderColor: "hsl(220 15% 85%)" }),
+                }}
               >
                 {e === "TODAS" ? "Todas" : ESTADO_LABEL[e]}
               </Link>
             ))}
           </nav>
-          <p className="text-sm text-neutral-600" aria-live="polite">
-            {counts
-              .map(
-                (c) =>
-                  `${c._count} ${ESTADO_LABEL[c.status as keyof typeof ESTADO_LABEL].toLowerCase()}s`
-              )
-              .join(" · ") || "Sin citas próximas."}
+
+          {/* Summary */}
+          <p style={{ fontSize: "0.8rem", color: "hsl(220 10% 50%)" }} aria-live="polite">
+            {counts.map((c) => `${c._count} ${ESTADO_LABEL[c.status as keyof typeof ESTADO_LABEL].toLowerCase()}s`).join(" · ") || "Sin citas próximas."}
             {total > 0 && ` · mostrando ${appts.length} de ${total}`}
           </p>
+
+          {/* Groups by day */}
           {[...groups].map(([day, list]) => (
-            <section key={day} aria-label={dayLabel(day)} className="space-y-2">
-              <h2 className="text-sm font-semibold capitalize text-neutral-700">
-                {dayLabel(day)} · {list.length}
+            <section key={day} aria-label={dayLabel(day)}>
+              <h2 style={{
+                fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase",
+                letterSpacing: "0.06em", color: "hsl(220 10% 50%)",
+                padding: "0.25rem 0", marginBottom: "0.5rem",
+                borderBottom: "1px solid hsl(220 15% 90%)",
+              }}>
+                {dayLabel(day)} · {list.length} cita{list.length !== 1 ? "s" : ""}
               </h2>
-              <ul className="space-y-2">
-                {list.map((a) => (
-                  <li key={a.id} className="flex items-start gap-3 rounded border p-3">
-                    <div className="min-w-12 text-center">
-                      <div className="text-lg font-bold">{hourFmt.format(a.startAt)}</div>
-                      <div className="text-[11px] text-neutral-500">
-                        {a.service.durationMinutes} min
+              <ul style={{ display: "flex", flexDirection: "column", gap: "0.625rem", listStyle: "none", padding: 0 }}>
+                {list.map((a) => {
+                  const sc = statusColor[a.status] ?? { bg: "hsl(220 20% 92%)", text: "hsl(220 15% 35%)" };
+                  return (
+                    <li key={a.id} style={{
+                      display: "flex", alignItems: "flex-start", gap: "0.875rem",
+                      background: "#fff", border: "1px solid hsl(220 15% 90%)",
+                      borderRadius: "0.75rem", padding: "0.875rem 1rem",
+                      boxShadow: "0 1px 3px hsl(220 15% 15% / 0.05)",
+                      transition: "box-shadow 0.15s",
+                    }}>
+                      {/* Time column */}
+                      <div style={{ minWidth: "3rem", textAlign: "center", flexShrink: 0 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.05rem", color: "hsl(220 15% 12%)", lineHeight: 1 }}>
+                          {hourFmt.format(a.startAt)}
+                        </div>
+                        <div style={{ fontSize: "0.7rem", color: "hsl(220 10% 55%)", marginTop: "0.2rem" }}>
+                          {a.service.durationMinutes} min
+                        </div>
                       </div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium">
-                        {a.service.name} · {a.staff.name}
+                      {/* Info column */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "hsl(220 15% 12%)", marginBottom: "0.15rem" }}>
+                          {a.service.name} · <span style={{ fontWeight: 400, color: "hsl(220 10% 45%)" }}>{a.staff.name}</span>
+                        </div>
+                        <div style={{ fontSize: "0.83rem", color: "hsl(220 10% 50%)", marginBottom: "0.5rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {a.customer.name}{a.customer.phone ? ` · ${a.customer.phone}` : ""}
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "0.5rem" }}>
+                          <span style={{
+                            padding: "0.15rem 0.6rem", fontSize: "0.72rem", fontWeight: 600,
+                            borderRadius: "9999px", background: sc.bg, color: sc.text,
+                          }}>
+                            {ESTADO_LABEL[a.status as keyof typeof ESTADO_LABEL]}
+                          </span>
+                          <StatusButtons id={a.id} />
+                        </div>
                       </div>
-                      <div className="truncate text-sm text-gray-600">
-                        {a.customer.name} {a.customer.phone ? `· ${a.customer.phone}` : ""}
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs">
-                          {ESTADO_LABEL[a.status as keyof typeof ESTADO_LABEL]}
-                        </span>
-                        <StatusButtons id={a.id} />
-                      </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ))}
+
+          {/* Pagination */}
           {totalPages > 1 && (
-            <nav
-              className="flex items-center justify-between text-sm"
-              aria-label="Páginas de citas"
-            >
-              {safePage > 1 ? (
-                <Link href={pageQ(safePage - 1)} className="underline">
-                  ← Anterior
-                </Link>
-              ) : (
-                <span />
-              )}
-              <span className="text-neutral-600" aria-live="polite">
-                Página {safePage} de {totalPages}
-              </span>
-              {safePage < totalPages ? (
-                <Link href={pageQ(safePage + 1)} className="underline">
-                  Siguiente →
-                </Link>
-              ) : (
-                <span />
-              )}
+            <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "0.875rem" }} aria-label="Páginas de citas">
+              {safePage > 1
+                ? <Link href={pageQ(safePage - 1)} style={{ color: "hsl(252 70% 55%)", textDecoration: "none" }}>← Anterior</Link>
+                : <span />}
+              <span style={{ color: "hsl(220 10% 50%)" }} aria-live="polite">Página {safePage} de {totalPages}</span>
+              {safePage < totalPages
+                ? <Link href={pageQ(safePage + 1)} style={{ color: "hsl(252 70% 55%)", textDecoration: "none" }}>Siguiente →</Link>
+                : <span />}
             </nav>
           )}
         </section>

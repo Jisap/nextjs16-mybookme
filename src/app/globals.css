@@ -38,11 +38,34 @@ html {
 }
 
 body {
-  background-color: var(--surface-0);
-  color: var(--text-primary);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+/* ── Dark page (landing, login) ── */
+.page-dark {
+  background-color: var(--surface-0);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* ── Light page (dashboard, book) ── */
+.page-light {
+  background-color: hsl(220 20% 97%);
+  color: hsl(220 15% 15%);
+  min-height: 100vh;
+}
+
+/* ── Dashboard surface tokens ── */
+.dash-surface {
+  --ds-bg:       hsl(220 20% 97%);
+  --ds-card:     hsl(0 0% 100%);
+  --ds-border:   hsl(220 15% 88%);
+  --ds-text:     hsl(220 15% 15%);
+  --ds-muted:    hsl(220 10% 50%);
+  --ds-accent:   hsl(252 75% 57%);
+  --ds-accent-l: hsl(252 85% 97%);
 }
 
 /* ── Animated gradient background mesh ── */

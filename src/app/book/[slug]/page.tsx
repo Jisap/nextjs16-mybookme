@@ -182,11 +182,15 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
     const gUrl = googleCalendarUrl(calEvent);
     const oUrl = outlookCalendarUrl(calEvent);
     return (
-      <main className="mx-auto max-w-md space-y-4 p-4 pb-16 sm:p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">¡Reserva confirmada!</CardTitle>
-          </CardHeader>
+      <div className="page-light min-h-screen py-8 px-4">
+        <main className="mx-auto max-w-md space-y-4">
+          <Card className="shadow-lg border-neutral-200">
+            <CardHeader className="text-center pb-2">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+                ✓
+              </div>
+              <CardTitle className="text-2xl font-bold">¡Reserva confirmada!</CardTitle>
+            </CardHeader>
           <CardContent className="space-y-1">
             <p className="font-medium" aria-live="polite">
               {done.service}
@@ -241,7 +245,7 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
                 Hacer otra reserva
               </Button>
               <div className="text-center text-sm">
-                <Link href="/" className="underline">
+                <Link href="/" className="underline text-brand-600 hover:text-brand-700">
                   Volver al inicio
                 </Link>
               </div>
@@ -249,12 +253,14 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
           </CardContent>
         </Card>
       </main>
+    </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-lg space-y-5 p-4 pb-16 sm:p-6">
-      <header className="space-y-2 text-center sm:py-2">
+    <div className="page-light min-h-screen py-8 px-4 sm:px-6">
+      <main className="mx-auto max-w-lg space-y-6">
+        <header className="space-y-2 text-center pb-2">
         <h1 className="text-2xl font-bold text-balance">{biz?.name ?? "Reservar"}</h1>
         {biz?.description && <p className="text-sm text-neutral-600">{biz.description}</p>}
         {(biz?.phone || biz?.address) && (
@@ -434,5 +440,6 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
         )}
       </section>
     </main>
+  </div>
   );
 }

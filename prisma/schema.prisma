@@ -200,6 +200,7 @@ model Appointment {
   notes          String?
   idempotencyKey String?           // UUID generado por cliente (ADR-002)
   cancelToken    String            @unique @default(cuid()) // enlace seguro cancelación futura
+  reminderSentAt DateTime? // recordatorio 24h enviado (Fase 7)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 

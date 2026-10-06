@@ -4,6 +4,7 @@ import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Staff {
   id: string;
@@ -56,6 +57,7 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
   const [slot, setSlot] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [done, setDone] = useState<{ service: string; start: string; cancelToken: string } | null>(
@@ -95,8 +97,8 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
 
   async function submit() {
     setMsg(null);
-    if (!slot || !name || !phone) {
-      setMsg({ ok: false, text: "Elige hora e indica nombre y teléfono" });
+    if (!slot || !name || (!phone && !email)) {
+      setMsg({ ok: false, text: "Elige hora e indica nombre y teléfono o email" });
       return;
     }
     setLoading(true);
@@ -109,7 +111,8 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
           staffId,
           startAt: slot,
           name,
-          phone,
+          phone: phone || undefined,
+          email: email || undefined,
           idempotencyKey: crypto.randomUUID(),
           website: "", // honeypot: humano vacío, bot lo rellena y el backend finge éxito
         }),
@@ -148,7 +151,9 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
     return (
       <main className="mx-auto max-w-md space-y-2 p-6">
         <h1 className="text-2xl font-bold">¡Reserva confirmada!</h1>
-        <p className="mt-4">{done.service}</p>
+        <p className="mt-4" aria-live="polite">
+          {done.service}
+        </p>
         <p className="capitalize">{fmtDate(done.start, biz.timezone)}</p>
         <p>{fmtTime(done.start, biz.timezone)}</p>
         <p className="mt-2 text-sm text-gray-600">
@@ -182,13 +187,22 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
         </p>
       </header>
 
-      <section>
-        <h2 className="mb-1 text-sm font-semibold">1. Servicio</h2>
-        <div className="grid gap-2">
+      <section aria-labelledby="svc-h">
+        <h2 id="svc-h" className="mb-1 text-sm font-semibold">
+          1. Servicio
+        </h2>
+        {!biz && (
+          <p aria-live="polite" className="text-sm text-neutral-500">
+            Cargando servicios…
+          </p>
+        )}
+        <div className="grid gap-2" role="group" aria-label="Servicios">
           {services.map((s) => (
             <button
               key={s.id}
+              type="button"
               onClick={() => setServiceId(s.id)}
+              aria-pressed={serviceId === s.id}
               className={`rounded border p-3 text-left ${serviceId === s.id ? "border-black bg-gray-50" : ""}`}
             >
               <div className="font-medium">
@@ -202,11 +216,15 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-1 text-sm font-semibold">2. Profesional</h2>
-        <div className="flex flex-wrap gap-2">
+      <section aria-labelledby="pro-h">
+        <h2 id="pro-h" className="mb-1 text-sm font-semibold">
+          2. Profesional
+        </h2>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Profesionales">
           <button
+            type="button"
             onClick={() => setStaffId("any")}
+            aria-pressed={staffId === "any"}
             className={`rounded border px-3 py-2 ${staffId === "any" ? "border-black bg-gray-50" : ""}`}
           >
             Cualquiera
@@ -214,7 +232,9 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
           {eligibleStaff.map((st) => (
             <button
               key={st.id}
+              type="button"
               onClick={() => setStaffId(st.id)}
+              aria-pressed={staffId === st.id}
               className={`rounded border px-3 py-2 ${staffId === st.id ? "border-black bg-gray-50" : ""}`}
             >
               {st.name}
@@ -224,22 +244,31 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold">3. Fecha</h2>
-        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <Label htmlFor="book-date" className="mb-1 block text-sm font-semibold">
+          3. Fecha
+        </Label>
+        <Input id="book-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </section>
 
-      <section>
-        <h2 className="mb-1 text-sm font-semibold">
-          4. Hora {loading && <span className="font-normal">(cargando…)</span>}
+      <section aria-labelledby="hora-h" aria-busy={loading}>
+        <h2 id="hora-h" className="mb-1 text-sm font-semibold">
+          4. Hora{" "}
+          {loading && (
+            <span className="font-normal" role="status">
+              (cargando…)
+            </span>
+          )}
         </h2>
         {slots.length === 0 && !loading && (
           <p className="text-sm text-gray-600">Sin huecos ese día, prueba otra fecha.</p>
         )}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2" role="group" aria-label="Horas disponibles">
           {slots.map((s) => (
             <button
               key={s.start + (s.staffId ?? "")}
+              type="button"
               onClick={() => setSlot(s.start)}
+              aria-pressed={slot === s.start}
               className={`rounded border p-2 ${slot === s.start ? "border-black bg-gray-900 text-white" : ""}`}
             >
               {biz && fmtTime(s.start, biz.timezone)}
@@ -248,25 +277,50 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
         </div>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">5. Tus datos</h2>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre"
-          autoComplete="name"
-        />
-        <Input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="Teléfono"
-          inputMode="tel"
-          autoComplete="tel"
-        />
+      <section className="space-y-2" aria-labelledby="datos-h">
+        <h2 id="datos-h" className="text-sm font-semibold">
+          5. Tus datos
+        </h2>
+        <div className="space-y-1">
+          <Label htmlFor="book-name">Nombre</Label>
+          <Input
+            id="book-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre"
+            autoComplete="name"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="book-phone">Teléfono</Label>
+          <Input
+            id="book-phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Teléfono"
+            inputMode="tel"
+            autoComplete="tel"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="book-email">Email (para confirmación)</Label>
+          <Input
+            id="book-email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email (para confirmación)"
+            type="email"
+            autoComplete="email"
+          />
+        </div>
         <Button onClick={submit} disabled={loading || !slot} className="w-full">
-          Confirmar reserva
+          {loading ? "Reservando…" : "Confirmar reserva"}
         </Button>
-        {msg && <p className={msg.ok ? "text-green-700" : "text-red-700"}>{msg.text}</p>}
+        {msg && (
+          <p role="alert" className={msg.ok ? "text-green-700" : "text-red-700"}>
+            {msg.text}
+          </p>
+        )}
       </section>
     </main>
   );

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { PublicBookingError, createPublicAppointment } from "@/features/booking/service";
 import { createAppointmentBody } from "@/features/booking/schema";
 import { LIMITS, clientIp, rateLimit } from "@/lib/rate-limit";
+import { prisma } from "@/lib/db";
+import { bookingUrls, buildConfirmationEmail } from "@/features/notifications/email";
+import { sendEmail } from "@/features/notifications/send";
 
 export async function POST(req: Request, ctx: { params: Promise<{ slug: string }> }) {
   try {
@@ -29,6 +32,33 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
         { status: 400 }
       );
     const { appointment, deduped } = await createPublicAppointment(slug, parsed.data);
+
+    // Email confirmación (best-effort: nunca rompe la reserva)
+    if (!deduped) {
+      try {
+        const full = await prisma.appointment.findUnique({
+          where: { id: appointment.id },
+          include: { business: true, service: true, staff: true, customer: true },
+        });
+        if (full?.customer.email) {
+          const { cancelUrl, icsUrl } = bookingUrls(full.cancelToken);
+          const mail = buildConfirmationEmail({
+            businessName: full.business.name,
+            serviceName: full.service.name,
+            staffName: full.staff.name,
+            startAt: full.startAt,
+            timezone: full.business.timezone,
+            customerName: full.customer.name,
+            cancelUrl,
+            icsUrl,
+          });
+          await sendEmail({ to: full.customer.email, ...mail });
+        }
+      } catch (e) {
+        console.error("[booking:email] confirmación falló", e);
+      }
+    }
+
     return NextResponse.json(
       {
         appointment: {

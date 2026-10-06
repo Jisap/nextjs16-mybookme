@@ -17,6 +17,7 @@
     "proof:booking": "tsx scripts/proof-booking.ts",
     "link:owner": "tsx scripts/link-owner.ts",
     "qa:security": "tsx scripts/qa-security.ts",
+    "reminders": "tsx scripts/send-reminders.ts",
     "test": "vitest run"
   },
   "keywords": [],

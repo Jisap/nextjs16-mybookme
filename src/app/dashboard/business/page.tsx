@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardNav } from "../nav";
-import { BusinessBar } from "../business-bar";
 import { BusinessForm } from "./form";
+import { DashboardNav } from "../nav";
 
 export default async function BusinessPage({
   searchParams,
@@ -21,25 +20,36 @@ export default async function BusinessPage({
   const sp = await searchParams;
   const membership = memberships.find((m) => m.businessId === sp.businessId) ?? memberships[0];
   const business = membership.business;
+
   return (
-    <main className="mx-auto max-w-2xl space-y-4 p-4">
-      <h1 className="text-xl font-bold">Negocio — {business.name}</h1>
-      <BusinessBar role={membership.role} userEmail={data.user.email!} slug={business.slug} />
+    <main style={{ maxWidth: "860px", margin: "0 auto", padding: "1.5rem 1.25rem 4rem" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+        <h1 className="text-2xl font-extrabold text-neutral-900" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          Datos del Negocio — {business.name}
+        </h1>
+        <div className="flex items-center gap-2 text-xs text-neutral-500">
+          <span className="px-2.5 py-0.5 rounded-full font-semibold bg-neutral-900 text-white">
+            {membership.role === "OWNER" ? "Propietario" : "Personal"}
+          </span>
+          <span className="hidden sm:inline">{data.user.email}</span>
+        </div>
+      </div>
+
       <DashboardNav businessId={business.id} slug={business.slug} current="negocio" />
-      {membership.role === "OWNER" ? (
+
+      <div className="mt-4">
         <BusinessForm
           businessId={business.id}
+          slug={business.slug}
           initial={{
             name: business.name,
             description: business.description ?? "",
             phone: business.phone ?? "",
             address: business.address ?? "",
           }}
-          slug={business.slug}
         />
-      ) : (
-        <p className="text-sm text-neutral-600">Solo el propietario puede editar estos datos.</p>
-      )}
+      </div>
     </main>
   );
 }

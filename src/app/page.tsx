@@ -1,108 +1,280 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+/* ─── SVG Icon helpers ────────────────────────────────────── */
+const IconCalendar = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+);
+const IconLink = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+  </svg>
+);
+const IconBell = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const IconUsers = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+const IconZap = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+);
+const IconShield = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
+const IconArrow = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  </svg>
+);
+const IconCheck = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+const IconStar = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+);
+
+/* ─── Data ────────────────────────────────────────────────── */
+const features = [
+  { icon: <IconLink />, title: "Tu enlace único", desc: "Obtén tu URL personalizada /book/tu-negocio lista para compartir desde el primer día." },
+  { icon: <IconCalendar />, title: "Calendario inteligente", desc: "Solo se muestran los huecos realmente libres. Cero huecos dobles, cero llamadas de confirmación." },
+  { icon: <IconBell />, title: "Recordatorios automáticos", desc: "Email de confirmación y recordatorio previo a la cita. Sin que muevas un dedo." },
+  { icon: <IconUsers />, title: "Multi-profesional", desc: "Añade todos los profesionales de tu equipo con horarios y servicios propios." },
+  { icon: <IconZap />, title: "Sin fricción para el cliente", desc: "Reservan sin crear cuenta. Solo nombre y contacto, y ya tienen su cita confirmada." },
+  { icon: <IconShield />, title: "Sin pagos online", desc: "El cliente paga en tu local como siempre. Tú decides si cobras o no en el momento." },
+];
+
+const steps = [
+  { n: "1", title: "Crea tu negocio", desc: "Regístrate, ponle nombre y te generamos tu URL y horario base en menos de 2 minutos." },
+  { n: "2", title: "Configura", desc: "Añade servicios, profesionales y ajusta horarios desde el panel. Sin código, sin complicaciones." },
+  { n: "3", title: "Comparte y gestiona", desc: "Comparte tu enlace. Recibe, confirma o cancela citas desde cualquier dispositivo." },
+];
+
+const clientSteps = [
+  "Abren tu enlace, eligen servicio y profesional (o «cualquiera»).",
+  "Seleccionan fecha y hora entre los huecos disponibles.",
+  "Dejan su nombre y contacto, confirman y listo.",
+  "Reciben email con confirmación, enlace al calendario y opción de cancelar.",
+];
+
+const stats = [
+  { value: "2 min", label: "para estar operativo" },
+  { value: "0€", label: "coste de arranque" },
+  { value: "24/7", label: "disponible para tus clientes" },
+  { value: "∞", label: "reservas incluidas" },
+];
+
+/* ═══════════════════════════════════════════════════════════ */
 export default function Home() {
   return (
-    <main className="mx-auto min-h-screen w-full max-w-4xl space-y-10 p-4 pb-16 sm:p-6">
-      <header className="flex items-center justify-between py-4">
-        <p className="text-lg font-bold">MyBookMe</p>
-        <nav className="flex gap-2" aria-label="Acceso">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/login">Entrar</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/onboarding">Crear mi negocio</Link>
-          </Button>
-        </nav>
+    <>
+      {/* Animated background mesh */}
+      <div className="bg-mesh" aria-hidden="true" />
+
+      {/* ── Navbar ── */}
+      <header className="nav-glass sticky top-0 z-50">
+        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "3.75rem" }}>
+            <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", textDecoration: "none" }}>
+              <span style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: "2rem", height: "2rem", borderRadius: "0.5rem",
+                background: "linear-gradient(135deg, var(--brand-500), var(--accent-500))",
+                color: "#fff", fontWeight: 800, fontSize: "1rem",
+              }}>M</span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "var(--text-primary)" }}>
+                MyBook<span style={{ color: "hsl(252 95% 75%)" }}>Me</span>
+              </span>
+            </Link>
+            <nav aria-label="Acceso principal" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <Link href="/login" className="btn-outline-glass" style={{ padding: "0.45rem 1.1rem", fontSize: "0.875rem" }}>Entrar</Link>
+              <Link href="/onboarding" className="btn-glow" style={{ padding: "0.45rem 1.1rem", fontSize: "0.875rem" }}>Crear mi negocio</Link>
+            </nav>
+          </div>
+        </div>
       </header>
 
-      <section aria-labelledby="hero-h" className="space-y-4 text-center sm:py-6">
-        <h1 id="hero-h" className="text-3xl font-bold text-balance sm:text-4xl">
-          Reservas online para tu negocio, sin complicaciones
-        </h1>
-        <p className="mx-auto max-w-2xl text-base text-neutral-600">
-          Crea tu página de reservas, comparte tu enlace y gestiona citas desde el panel. Tus
-          clientes reservan sin crear cuenta. El pago se hace en tu local, como siempre.
-        </p>
-        <div className="flex flex-col justify-center gap-2 sm:flex-row">
-          <Button asChild size="lg">
-            <Link href="/onboarding">Crear mi negocio gratis</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/book/maria-nails">Probar demo de reserva</Link>
-          </Button>
-        </div>
-        <p className="text-sm text-neutral-500">
-          ¿Ya tienes cuenta?{" "}
-          <Link href="/dashboard" className="underline">
-            Ir a mi panel
-          </Link>
-        </p>
-      </section>
+      <main style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 1.5rem 5rem" }}>
 
-      <section aria-labelledby="biz-h" className="space-y-3">
-        <h2 id="biz-h" className="text-xl font-bold">
-          Para tu comercio: en 3 pasos
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>1. Crea tu negocio</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-neutral-600">
-              Regístrate y ponle nombre a tu negocio. Te creamos tu enlace{" "}
-              <code>/book/tu-negocio</code> y un horario base de lunes a viernes.
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>2. Configura</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-neutral-600">
-              Añade servicios, profesionales y horarios desde el panel. Sin pagos online: el
-              cliente paga en metálico en tu sede.
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>3. Comparte y gestiona</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-neutral-600">
-              Comparte tu enlace. Recibe citas, confirma o cancela desde el calendario y tus
-              clientes reciben email de confirmación y recordatorio.
-            </CardContent>
-          </Card>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button asChild>
-            <Link href="/onboarding">Empezar ahora</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/dashboard">Ver mi panel</Link>
-          </Button>
-        </div>
-      </section>
+        {/* ── Hero ── */}
+        <section aria-labelledby="hero-h" style={{ textAlign: "center", padding: "6rem 0 4rem" }}>
+          <div className="fade-up fade-up-1" style={{ marginBottom: "1.5rem" }}>
+            <span className="pill"><IconStar /> Gratis para siempre · Sin tarjeta de crédito</span>
+          </div>
+          <h1 id="hero-h" className="fade-up fade-up-2" style={{
+            fontFamily: "'Outfit', sans-serif", fontWeight: 900,
+            fontSize: "clamp(2.5rem, 6vw, 4.25rem)", lineHeight: 1.1,
+            letterSpacing: "-0.02em", marginBottom: "1.5rem",
+          }}>
+            Reservas online para tu negocio,{" "}
+            <span className="text-gradient">sin complicaciones</span>
+          </h1>
+          <p className="fade-up fade-up-3" style={{
+            color: "var(--text-secondary)", fontSize: "clamp(1rem, 2vw, 1.2rem)",
+            lineHeight: 1.65, maxWidth: "600px", margin: "0 auto 2.5rem",
+          }}>
+            Crea tu página de reservas en 2 minutos, comparte tu enlace y gestiona citas desde el panel.
+            Tus clientes reservan sin crear cuenta y pagan en tu local, como siempre.
+          </p>
+          <div className="fade-up fade-up-4" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1rem", marginBottom: "2rem" }}>
+            <Link href="/onboarding" className="btn-glow" style={{ fontSize: "1.05rem", padding: "0.875rem 2rem" }}>
+              Crear mi negocio gratis <IconArrow />
+            </Link>
+            <Link href="/book/maria-nails" className="btn-outline-glass" style={{ fontSize: "1.05rem", padding: "0.875rem 2rem" }}>
+              Ver demo de reserva
+            </Link>
+          </div>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+            ¿Ya tienes cuenta?{" "}
+            <Link href="/dashboard" style={{ color: "hsl(252 95% 78%)", textDecoration: "none", fontWeight: 500 }}>Ir a mi panel →</Link>
+          </p>
+        </section>
 
-      <section aria-labelledby="cli-h" className="space-y-3">
-        <h2 id="cli-h" className="text-xl font-bold">
-          Para tus clientes: reservar es así
-        </h2>
-        <Card>
-          <CardContent className="space-y-2 pt-4 text-sm text-neutral-700">
-            <p>1. Abren tu enlace, eligen servicio y profesional (o «cualquiera»).</p>
-            <p>2. Eligen fecha y solo ven las horas realmente libres.</p>
-            <p>3. Dejan nombre y teléfono o email, confirman y listo.</p>
-            <p>
-              4. Reciben confirmación por email, pueden añadirla al calendario y cancelarla si
-              lo necesitan.
+        {/* ── Stats bar ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "5rem" }}>
+          {stats.map((s) => (
+            <div key={s.label} className="stat-card">
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "2rem", color: "hsl(252 95% 78%)", lineHeight: 1, marginBottom: "0.4rem" }}>{s.value}</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Features grid ── */}
+        <section aria-labelledby="features-h" style={{ marginBottom: "5rem" }}>
+          <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+            <h2 id="features-h" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "clamp(1.75rem, 3vw, 2.5rem)", marginBottom: "0.75rem" }}>
+              Todo lo que necesitas,{" "}<span className="text-gradient">listo desde el primer día</span>
+            </h2>
+            <p style={{ color: "var(--text-secondary)", maxWidth: "500px", margin: "0 auto" }}>
+              Sin instalaciones, sin plugins, sin sorpresas. Todo integrado en un panel limpio.
             </p>
-          </CardContent>
-        </Card>
-        <Button asChild variant="outline">
-          <Link href="/book/maria-nails">Ver ejemplo real de reserva</Link>
-        </Button>
-      </section>
-    </main>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.25rem" }}>
+            {features.map((f) => (
+              <div key={f.title} className="glass" style={{ padding: "1.75rem" }}>
+                <div className="icon-wrap" style={{ color: "hsl(252 95% 78%)" }}>{f.icon}</div>
+                <h3 style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "0.5rem" }}>{f.title}</h3>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6 }}>{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="divider-glow" style={{ marginBottom: "5rem" }} />
+
+        {/* ── Steps (business) ── */}
+        <section aria-labelledby="biz-h" style={{ marginBottom: "5rem" }}>
+          <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+            <span className="pill" style={{ marginBottom: "1rem", display: "inline-flex" }}>Para negocios</span>
+            <h2 id="biz-h" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "clamp(1.75rem, 3vw, 2.5rem)", marginBottom: "0.75rem" }}>
+              En marcha en <span className="text-gradient">3 pasos</span>
+            </h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem", marginBottom: "2rem" }}>
+            {steps.map((s) => (
+              <div key={s.n} className="glass" style={{ padding: "2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.875rem" }}>
+                  <span className="step-badge">{s.n}</span>
+                  <h3 style={{ fontWeight: 700, fontSize: "1rem" }}>{s.title}</h3>
+                </div>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.6 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+            <Link href="/onboarding" className="btn-glow">Empezar ahora <IconArrow /></Link>
+            <Link href="/dashboard" className="btn-outline-glass">Ver mi panel</Link>
+          </div>
+        </section>
+
+        <div className="divider-glow" style={{ marginBottom: "5rem" }} />
+
+        {/* ── Client flow ── */}
+        <section aria-labelledby="cli-h" style={{ marginBottom: "5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "3rem", alignItems: "center" }}>
+            <div>
+              <span className="pill" style={{ marginBottom: "1rem", display: "inline-flex" }}>Para tus clientes</span>
+              <h2 id="cli-h" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "clamp(1.75rem, 3vw, 2.25rem)", marginBottom: "1rem", lineHeight: 1.2 }}>
+                Reservar es <span className="text-gradient">así de fácil</span>
+              </h2>
+              <p style={{ color: "var(--text-secondary)", marginBottom: "1.75rem", lineHeight: 1.6 }}>
+                Sin apps, sin contraseñas. En menos de un minuto tienen su cita confirmada.
+              </p>
+              <Link href="/book/maria-nails" className="btn-glow">Ver ejemplo real <IconArrow /></Link>
+            </div>
+            <div className="glass" style={{ padding: "2rem" }}>
+              <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                {clientSteps.map((step, i) => (
+                  <li key={i} style={{ display: "flex", gap: "0.875rem", alignItems: "flex-start" }}>
+                    <span style={{
+                      minWidth: "1.5rem", height: "1.5rem", borderRadius: "9999px",
+                      background: "hsl(252 75% 57% / 0.2)", border: "1px solid hsl(252 75% 57% / 0.35)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "hsl(252 95% 78%)", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0,
+                    }}>{i + 1}</span>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.5 }}>{step}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <div className="divider-glow" style={{ marginBottom: "5rem" }} />
+
+        {/* ── CTA final ── */}
+        <section aria-labelledby="cta-h" style={{ textAlign: "center", padding: "3rem 1rem" }}>
+          <div className="glass" style={{ padding: "3.5rem 2rem", position: "relative", overflow: "hidden" }}>
+            <div aria-hidden="true" style={{ position: "absolute", top: "-60px", right: "-60px", width: "300px", height: "300px", borderRadius: "9999px", background: "radial-gradient(circle, hsl(252 75% 57% / 0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div aria-hidden="true" style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "250px", height: "250px", borderRadius: "9999px", background: "radial-gradient(circle, hsl(320 75% 55% / 0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <h2 id="cta-h" style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 900, fontSize: "clamp(1.75rem, 4vw, 3rem)", marginBottom: "1rem", lineHeight: 1.15 }}>
+              Empieza hoy. <span className="text-gradient">Es gratis.</span>
+            </h2>
+            <p style={{ color: "var(--text-secondary)", maxWidth: "440px", margin: "0 auto 2.25rem", lineHeight: 1.6 }}>
+              Sin tarjeta de crédito. Sin límite de reservas. Sin comisiones ocultas.
+            </p>
+            <ul style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1.25rem", marginBottom: "2.25rem", listStyle: "none", padding: 0 }}>
+              {["Configuración en 2 minutos", "Sin pagos online", "Clientes sin cuenta", "Cancelación gratuita"].map((item) => (
+                <li key={item} style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+                  <span style={{ color: "hsl(252 95% 78%)" }}><IconCheck /></span> {item}
+                </li>
+              ))}
+            </ul>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1rem" }}>
+              <Link href="/onboarding" className="btn-glow" style={{ fontSize: "1.05rem", padding: "0.9rem 2.25rem" }}>
+                Crear mi negocio gratis <IconArrow />
+              </Link>
+              <Link href="/book/maria-nails" className="btn-outline-glass" style={{ fontSize: "1.05rem", padding: "0.9rem 2.25rem" }}>
+                Probar la demo
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* ── Footer ── */}
+      <footer style={{ borderTop: "1px solid hsl(240 15% 100% / 0.06)", padding: "2rem 1.5rem", textAlign: "center" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+          © {new Date().getFullYear()} MyBookMe ·{" "}
+          <Link href="/login" style={{ color: "hsl(252 95% 78%)", textDecoration: "none" }}>Entrar</Link>
+          {" · "}
+          <Link href="/onboarding" style={{ color: "hsl(252 95% 78%)", textDecoration: "none" }}>Crear negocio</Link>
+        </p>
+      </footer>
+    </>
   );
 }

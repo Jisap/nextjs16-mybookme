@@ -1,1 +1,236 @@
 @import "tailwindcss";
+
+:root {
+  --brand-50:  hsl(252 100% 97%);
+  --brand-100: hsl(252 95%  92%);
+  --brand-200: hsl(252 90%  85%);
+  --brand-300: hsl(252 85%  75%);
+  --brand-400: hsl(252 80%  65%);
+  --brand-500: hsl(252 75%  57%);
+  --brand-600: hsl(252 70%  48%);
+  --brand-700: hsl(252 65%  40%);
+  --brand-800: hsl(252 60%  30%);
+  --brand-900: hsl(252 55%  20%);
+
+  --accent-400: hsl(320 80% 65%);
+  --accent-500: hsl(320 75% 55%);
+
+  --surface-0:  hsl(240 20% 4%);
+  --surface-1:  hsl(240 18% 7%);
+  --surface-2:  hsl(240 15% 10%);
+  --surface-3:  hsl(240 12% 14%);
+  --surface-card: hsl(240 15% 9% / 0.7);
+
+  --text-primary:   hsl(240 10% 96%);
+  --text-secondary: hsl(240 8%  72%);
+  --text-muted:     hsl(240 6%  50%);
+
+  --glow-brand: 0 0 60px hsl(252 75% 57% / 0.35);
+  --glow-accent: 0 0 40px hsl(320 75% 55% / 0.25);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--surface-0);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Animated gradient background mesh ── */
+.bg-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,  hsl(252 75% 25% / 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%,  hsl(320 70% 25% / 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 40% at 55% 45%,  hsl(200 60% 15% / 0.30) 0%, transparent 60%),
+    var(--surface-0);
+  animation: meshMove 14s ease-in-out infinite alternate;
+}
+
+@keyframes meshMove {
+  0%   { background-position: 20% 10%, 80% 80%, 55% 45%; }
+  50%  { background-position: 22% 14%, 78% 76%, 58% 48%; }
+  100% { background-position: 18% 8%,  82% 84%, 52% 42%; }
+}
+
+/* ── Glass card ── */
+.glass {
+  background: var(--surface-card);
+  border: 1px solid hsl(240 20% 100% / 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1rem;
+}
+
+.glass:hover {
+  border-color: hsl(252 75% 57% / 0.30);
+  box-shadow: 0 0 0 1px hsl(252 75% 57% / 0.15), 0 8px 40px hsl(252 75% 57% / 0.10);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* ── Gradient text ── */
+.text-gradient {
+  background: linear-gradient(135deg, hsl(252 95% 75%) 0%, hsl(320 85% 72%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Glow button ── */
+.btn-glow {
+  background: linear-gradient(135deg, var(--brand-500), var(--accent-500));
+  color: #fff;
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.75rem 1.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1;
+}
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--brand-400), var(--accent-400));
+  filter: blur(14px);
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s;
+}
+.btn-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px hsl(252 75% 57% / 0.45);
+}
+.btn-glow:hover::before { opacity: 0.7; }
+.btn-glow:active { transform: translateY(0); }
+
+.btn-outline-glass {
+  background: hsl(240 15% 100% / 0.06);
+  border: 1px solid hsl(240 15% 100% / 0.15);
+  color: var(--text-primary);
+  border-radius: 0.625rem;
+  padding: 0.75rem 1.75rem;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+}
+.btn-outline-glass:hover {
+  background: hsl(240 15% 100% / 0.12);
+  border-color: hsl(252 75% 57% / 0.5);
+  transform: translateY(-2px);
+}
+.btn-outline-glass:active { transform: translateY(0); }
+
+/* ── Fade-up animation ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) both;
+}
+.fade-up-1 { animation-delay: 0.05s; }
+.fade-up-2 { animation-delay: 0.15s; }
+.fade-up-3 { animation-delay: 0.25s; }
+.fade-up-4 { animation-delay: 0.35s; }
+
+/* ── Step badge ── */
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--brand-500), var(--accent-500));
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px hsl(252 75% 57% / 0.45);
+}
+
+/* ── Pill badge ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: hsl(252 75% 57% / 0.15);
+  border: 1px solid hsl(252 75% 57% / 0.3);
+  color: hsl(252 95% 80%);
+  border-radius: 9999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ── Feature icon wrapper ── */
+.icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  background: linear-gradient(135deg, hsl(252 75% 57% / 0.2), hsl(320 75% 55% / 0.15));
+  border: 1px solid hsl(252 75% 57% / 0.25);
+  margin-bottom: 1rem;
+  transition: transform 0.2s;
+}
+
+.glass:hover .icon-wrap {
+  transform: scale(1.12);
+}
+
+/* ── Divider with glow ── */
+.divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(252 75% 57% / 0.4), transparent);
+  margin: 0;
+}
+
+/* ── Navbar glass ── */
+.nav-glass {
+  background: hsl(240 18% 5% / 0.8);
+  border-bottom: 1px solid hsl(240 15% 100% / 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Stat counter card ── */
+.stat-card {
+  background: hsl(240 15% 100% / 0.04);
+  border: 1px solid hsl(240 15% 100% / 0.07);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+}

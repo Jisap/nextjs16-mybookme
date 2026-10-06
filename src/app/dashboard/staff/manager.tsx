@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Staff {
   id: string;
@@ -72,34 +75,56 @@ export function StaffManager({ businessId }: { businessId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2 rounded border p-3">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre (ej. María)"
-          className="w-full rounded border p-2"
-        />
-        <div className="flex flex-wrap gap-2">
-          {services.map((s) => (
-            <label key={s.id} className="flex items-center gap-1 text-sm">
-              <input
-                type="checkbox"
-                checked={checked.includes(s.id)}
-                onChange={() =>
-                  setChecked(
-                    checked.includes(s.id) ? checked.filter((x) => x !== s.id) : [...checked, s.id]
-                  )
-                }
-              />
-              {s.name}
-            </label>
-          ))}
+      <form
+        className="space-y-3 rounded border p-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create();
+        }}
+      >
+        <div className="space-y-1">
+          <Label htmlFor="staff-name">Profesional</Label>
+          <Input
+            id="staff-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre (ej. María)"
+            autoComplete="off"
+          />
         </div>
-        <button onClick={create} className="rounded bg-black px-4 py-2 text-white">
-          Añadir profesional
-        </button>
-      </div>
-      {msg && <p className="text-sm text-red-700">{msg}</p>}
+        <fieldset>
+          <legend className="text-sm font-medium">Servicios que realiza</legend>
+          {services.length === 0 && (
+            <p className="text-sm text-neutral-500">
+              Primero crea un servicio en la pestaña Servicios.
+            </p>
+          )}
+          <div className="mt-1 flex flex-wrap gap-2">
+            {services.map((s) => (
+              <label key={s.id} className="flex items-center gap-1 text-sm">
+                <input
+                  type="checkbox"
+                  checked={checked.includes(s.id)}
+                  onChange={() =>
+                    setChecked(
+                      checked.includes(s.id)
+                        ? checked.filter((x) => x !== s.id)
+                        : [...checked, s.id]
+                    )
+                  }
+                />
+                {s.name}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <Button type="submit">Añadir profesional</Button>
+      </form>
+      {msg && (
+        <p role="alert" className="text-sm text-red-700">
+          {msg}
+        </p>
+      )}
       <ul className="space-y-2">
         {list.map((st) => (
           <li key={st.id} className="rounded border p-3">
@@ -107,9 +132,9 @@ export function StaffManager({ businessId }: { businessId: string }) {
               <span className="font-medium">
                 {st.name} {st.active ? "" : "(inactivo)"}
               </span>
-              <button onClick={() => toggleActive(st)} className="rounded border px-2 py-1 text-xs">
+              <Button onClick={() => toggleActive(st)} variant="outline" size="sm" type="button">
                 {st.active ? "Desactivar" : "Activar"}
-              </button>
+              </Button>
             </div>
             <div className="mt-2 flex flex-wrap gap-2">
               {services.map((s) => (

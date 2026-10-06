@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-sm p-6">
+    <main className="mx-auto max-w-sm space-y-3 p-6">
+      <p className="text-sm">
+        <Link href="/" className="underline">
+          ← Volver al inicio
+        </Link>
+      </p>
       <Card>
         <CardHeader>
           <CardTitle>Entrar al panel</CardTitle>

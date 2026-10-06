@@ -45,7 +45,14 @@ export async function getPublicServices(slug: string) {
     orderBy: { name: "asc" },
   });
   return {
-    business: { name: b.name, slug: b.slug, timezone: b.timezone },
+    business: {
+      name: b.name,
+      slug: b.slug,
+      timezone: b.timezone,
+      description: b.description,
+      phone: b.phone,
+      address: b.address,
+    },
     staff: staffList.map((st) => ({ id: st.id, name: st.name })),
     services: services.map((s) => ({
       id: s.id,

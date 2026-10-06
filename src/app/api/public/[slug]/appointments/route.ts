@@ -47,6 +47,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ slug: string }
             serviceName: full.service.name,
             staffName: full.staff.name,
             startAt: full.startAt,
+            endAt: full.endAt,
             timezone: full.business.timezone,
             customerName: full.customer.name,
             cancelUrl,

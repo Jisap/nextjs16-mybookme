@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { googleCalendarUrl, outlookCalendarUrl } from "@/features/booking/calendar-links";
 
 interface Staff {
   id: string;
@@ -24,6 +26,13 @@ interface Slot {
   end: string;
   staffId?: string;
   staffIds?: string[];
+}
+interface Biz {
+  name: string;
+  timezone: string;
+  description: string | null;
+  phone: string | null;
+  address: string | null;
 }
 
 function fmtTime(iso: string, tz: string) {
@@ -47,7 +56,7 @@ function toYMD(d: Date) {
 
 export default function BookPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const [biz, setBiz] = useState<{ name: string; timezone: string } | null>(null);
+  const [biz, setBiz] = useState<Biz | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [serviceId, setServiceId] = useState("");
@@ -60,9 +69,12 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [done, setDone] = useState<{ service: string; start: string; cancelToken: string } | null>(
-    null
-  );
+  const [done, setDone] = useState<{
+    service: string;
+    start: string;
+    end: string;
+    cancelToken: string;
+  } | null>(null);
 
   useEffect(() => {
     fetch(`/api/public/${slug}/services`)
@@ -140,6 +152,7 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
       setDone({
         service: svc?.name ?? "",
         start: j.appointment?.startAt ?? slot,
+        end: j.appointment?.endAt ?? slot,
         cancelToken: j.appointment?.cancelToken ?? "",
       });
     } finally {
@@ -148,110 +161,193 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
   }
 
   if (done && biz) {
+    const calEvent = {
+      title: `${done.service} - ${biz.name}`,
+      details: `Reserva en ${biz.name} con ${name}`,
+      location: [biz.address, biz.phone].filter(Boolean).join(" · ") || biz.name,
+      start: new Date(done.start),
+      end: new Date(done.end),
+    };
+    const gUrl = googleCalendarUrl(calEvent);
+    const oUrl = outlookCalendarUrl(calEvent);
     return (
-      <main className="mx-auto max-w-md space-y-2 p-6">
-        <h1 className="text-2xl font-bold">¡Reserva confirmada!</h1>
-        <p className="mt-4" aria-live="polite">
-          {done.service}
-        </p>
-        <p className="capitalize">{fmtDate(done.start, biz.timezone)}</p>
-        <p>{fmtTime(done.start, biz.timezone)}</p>
-        <p className="mt-2 text-sm text-gray-600">
-          {biz.name} · {name}
-        </p>
-        {done.cancelToken && (
-          <div className="space-y-2 pt-2">
-            <Button asChild className="w-full">
-              <a href={`/api/public/appointments/by-token/${done.cancelToken}/ics`}>
-                Añadir al calendario
-              </a>
-            </Button>
-            <Link
-              href={`/book/cancel/${done.cancelToken}`}
-              className="block text-center text-sm underline"
-            >
-              Cancelar reserva
-            </Link>
-          </div>
-        )}
+      <main className="mx-auto max-w-md space-y-4 p-4 pb-16 sm:p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">¡Reserva confirmada!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <p className="font-medium" aria-live="polite">
+              {done.service}
+            </p>
+            <p className="capitalize">{fmtDate(done.start, biz.timezone)}</p>
+            <p>{fmtTime(done.start, biz.timezone)}</p>
+            <p className="mt-2 text-sm text-neutral-600">
+              {biz.name} · {name}
+            </p>
+            <p className="rounded bg-neutral-100 p-2 text-sm">
+              Sin pagos online: pagarás en el local cuando vayas a tu cita.
+            </p>
+            {(biz.phone || biz.address) && (
+              <p className="text-sm text-neutral-600">
+                {[biz.address, biz.phone].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {done.cancelToken && (
+              <div className="space-y-2 pt-2">
+                <Button asChild className="w-full">
+                  <a href={gUrl} target="_blank" rel="noopener">
+                    Añadir a Google Calendar
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={oUrl} target="_blank" rel="noopener">
+                    Añadir a Outlook
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={`/api/public/appointments/by-token/${done.cancelToken}/ics`}>
+                    Descargar archivo (.ics)
+                  </a>
+                </Button>
+                <div className="text-center text-sm">
+                  <Link href={`/book/cancel/${done.cancelToken}`} className="underline">
+                    Cancelar reserva
+                  </Link>
+                </div>
+              </div>
+            )}
+            <div className="space-y-2 pt-2">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  setDone(null);
+                  setSlot("");
+                  setMsg(null);
+                }}
+              >
+                Hacer otra reserva
+              </Button>
+              <div className="text-center text-sm">
+                <Link href="/" className="underline">
+                  Volver al inicio
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-md space-y-5 p-4 pb-16">
-      <header>
-        <h1 className="text-xl font-bold">{biz?.name ?? "Reservar"}</h1>
-        <p className="text-sm text-gray-600">
-          Elige servicio, profesional, fecha y hora. Sin crear cuenta.
-        </p>
-      </header>
-
-      <section aria-labelledby="svc-h">
-        <h2 id="svc-h" className="mb-1 text-sm font-semibold">
-          1. Servicio
-        </h2>
+    <main className="mx-auto max-w-lg space-y-5 p-4 pb-16 sm:p-6">
+      <header className="space-y-2 text-center sm:py-2">
+        <h1 className="text-2xl font-bold text-balance">{biz?.name ?? "Reservar"}</h1>
+        {biz?.description && <p className="text-sm text-neutral-600">{biz.description}</p>}
+        {(biz?.phone || biz?.address) && (
+          <p className="text-sm text-neutral-500">
+            {[biz.address, biz.phone].filter(Boolean).join(" · ")}
+          </p>
+        )}
+        {biz?.address && (
+          <div className="space-y-1">
+            <iframe
+              title={`Mapa: ${biz.name}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(biz.address)}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="aspect-video w-full rounded-md border"
+            />
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(biz.address)}`}
+              target="_blank"
+              rel="noopener"
+              className="text-sm underline"
+            >
+              Cómo llegar en Google Maps
+            </a>
+          </div>
+        )}
         {!biz && (
           <p aria-live="polite" className="text-sm text-neutral-500">
             Cargando servicios…
           </p>
         )}
-        <div className="grid gap-2" role="group" aria-label="Servicios">
-          {services.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setServiceId(s.id)}
-              aria-pressed={serviceId === s.id}
-              className={`rounded border p-3 text-left ${serviceId === s.id ? "border-black bg-gray-50" : ""}`}
-            >
-              <div className="font-medium">
-                {s.name} · {s.durationMinutes} min
-              </div>
-              <div className="text-sm text-gray-600">
-                {(s.priceCents / 100).toFixed(2)} {s.currency}
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
+      </header>
 
-      <section aria-labelledby="pro-h">
-        <h2 id="pro-h" className="mb-1 text-sm font-semibold">
-          2. Profesional
-        </h2>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Profesionales">
-          <button
-            type="button"
-            onClick={() => setStaffId("any")}
-            aria-pressed={staffId === "any"}
-            className={`rounded border px-3 py-2 ${staffId === "any" ? "border-black bg-gray-50" : ""}`}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Cómo funciona</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 text-sm text-neutral-700">
+          <p>1. Elige servicio, profesional, fecha y hora libre.</p>
+          <p>2. Deja tu nombre y teléfono o email, y confirma.</p>
+          <p>3. Recibirás la confirmación por email, con opción de cancelar si lo necesitas.</p>
+          <p className="rounded bg-neutral-100 p-2">
+            El pago se hace en el local, no aquí: reserva gratis y sin crear cuenta.
+          </p>
+        </CardContent>
+      </Card>
+
+      <section className="space-y-1">
+        <Label htmlFor="book-service" className="block text-base font-semibold">
+          1. Servicio
+        </Label>
+        {services.length === 0 && biz ? (
+          <p className="text-sm text-neutral-600">
+            Este negocio aún no ha publicado servicios. Vuelve a intentarlo más tarde.
+          </p>
+        ) : (
+          <select
+            id="book-service"
+            value={serviceId}
+            onChange={(e) => setServiceId(e.target.value)}
+            className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
           >
-            Cualquiera
-          </button>
-          {eligibleStaff.map((st) => (
-            <button
-              key={st.id}
-              type="button"
-              onClick={() => setStaffId(st.id)}
-              aria-pressed={staffId === st.id}
-              className={`rounded border px-3 py-2 ${staffId === st.id ? "border-black bg-gray-50" : ""}`}
-            >
-              {st.name}
-            </button>
-          ))}
-        </div>
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} · {s.durationMinutes} min · {(s.priceCents / 100).toFixed(2)} {s.currency}
+              </option>
+            ))}
+          </select>
+        )}
+        {services.find((s) => s.id === serviceId)?.description && (
+          <p className="text-sm text-neutral-600">
+            {services.find((s) => s.id === serviceId)?.description}
+          </p>
+        )}
       </section>
 
-      <section>
-        <Label htmlFor="book-date" className="mb-1 block text-sm font-semibold">
+      <section className="space-y-1">
+        <Label htmlFor="book-staff" className="block text-base font-semibold">
+          2. Profesional
+        </Label>
+        <select
+          id="book-staff"
+          value={staffId}
+          onChange={(e) => setStaffId(e.target.value)}
+          className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        >
+          <option value="any">Cualquiera</option>
+          {eligibleStaff.map((st) => (
+            <option key={st.id} value={st.id}>
+              {st.name}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      <section className="space-y-1">
+        <Label htmlFor="book-date" className="block text-base font-semibold">
           3. Fecha
         </Label>
         <Input id="book-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </section>
 
-      <section aria-labelledby="hora-h" aria-busy={loading}>
-        <h2 id="hora-h" className="mb-1 text-sm font-semibold">
+      <section aria-labelledby="hora-h" aria-busy={loading} className="space-y-2">
+        <h2 id="hora-h" className="text-base font-semibold">
           4. Hora{" "}
           {loading && (
             <span className="font-normal" role="status">
@@ -260,7 +356,7 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
           )}
         </h2>
         {slots.length === 0 && !loading && (
-          <p className="text-sm text-gray-600">Sin huecos ese día, prueba otra fecha.</p>
+          <p className="text-sm text-neutral-600">Sin huecos ese día, prueba otra fecha.</p>
         )}
         <div className="grid grid-cols-3 gap-2" role="group" aria-label="Horas disponibles">
           {slots.map((s) => (
@@ -278,7 +374,7 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
       </section>
 
       <section className="space-y-2" aria-labelledby="datos-h">
-        <h2 id="datos-h" className="text-sm font-semibold">
+        <h2 id="datos-h" className="text-base font-semibold">
           5. Tus datos
         </h2>
         <div className="space-y-1">
@@ -316,6 +412,10 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
         <Button onClick={submit} disabled={loading || !slot} className="w-full">
           {loading ? "Reservando…" : "Confirmar reserva"}
         </Button>
+        <p className="text-xs text-neutral-500">
+          Al confirmar aceptas que el negocio guarde tus datos para gestionar tu cita. Sin pagos
+          online.
+        </p>
         {msg && (
           <p role="alert" className={msg.ok ? "text-green-700" : "text-red-700"}>
             {msg.text}

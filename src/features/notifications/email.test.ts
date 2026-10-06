@@ -7,6 +7,7 @@ describe("booking emails", () => {
     serviceName: "Manicura",
     staffName: "María",
     startAt: new Date("2026-10-12T09:00:00Z"),
+    endAt: new Date("2026-10-12T09:45:00Z"),
     timezone: "Europe/Madrid",
     customerName: "Lucía",
     cancelUrl: "http://localhost:3000/book/cancel/abc",
@@ -19,7 +20,9 @@ describe("booking emails", () => {
     expect(e.subject).toContain("María Nails");
     expect(e.text).toContain(base.cancelUrl);
     expect(e.text).toContain(base.icsUrl);
+    expect(e.text).toContain("calendar.google.com");
     expect(e.html).toContain(base.cancelUrl);
+    expect(e.html).toContain("Google Calendar");
   });
 
   it("recordatorio menciona mañana y escapa html", () => {

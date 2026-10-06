@@ -4,6 +4,8 @@ import { fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import { StatusButtons } from "../status-buttons";
+import { DashboardNav } from "../nav";
+import { BusinessBar } from "../business-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -48,8 +50,8 @@ export default async function CalendarPage({
   });
   if (memberships.length === 0) redirect("/dashboard");
   const sp = await searchParams;
-  const business =
-    memberships.find((m) => m.businessId === sp.businessId)?.business ?? memberships[0].business;
+  const membership = memberships.find((m) => m.businessId === sp.businessId) ?? memberships[0];
+  const business = membership.business;
   const view = sp.view === "semana" ? "semana" : "dia";
   const dateStr = sp.date ?? toYMD(new Date());
 
@@ -88,6 +90,8 @@ export default async function CalendarPage({
     return (
       <main className="mx-auto max-w-5xl space-y-4 p-4">
         <h1 className="text-xl font-bold">Calendario — {business.name}</h1>
+        <BusinessBar role={membership.role} userEmail={data.user.email!} slug={business.slug} />
+        <DashboardNav businessId={business.id} slug={business.slug} current="calendario" />
         <nav
           className="flex flex-wrap items-center gap-2 text-sm"
           aria-label="Vistas del calendario"
@@ -162,6 +166,8 @@ export default async function CalendarPage({
   return (
     <main className="mx-auto max-w-2xl space-y-4 p-4">
       <h1 className="text-xl font-bold">Calendario — {business.name}</h1>
+      <BusinessBar role={membership.role} userEmail={data.user.email!} slug={business.slug} />
+      <DashboardNav businessId={business.id} slug={business.slug} current="calendario" />
       <nav className="flex flex-wrap items-center gap-2 text-sm" aria-label="Vistas del calendario">
         <Button asChild variant="secondary" size="sm">
           <Link href={qs({ view: "dia" })}>Día</Link>

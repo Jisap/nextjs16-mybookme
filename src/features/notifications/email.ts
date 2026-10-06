@@ -1,3 +1,5 @@
+import { googleCalendarUrl } from "@/features/booking/calendar-links";
+
 function escHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -22,6 +24,7 @@ export interface BookingEmailInput {
   serviceName: string;
   staffName: string;
   startAt: Date;
+  endAt: Date;
   timezone: string;
   customerName: string;
   cancelUrl: string;
@@ -48,6 +51,13 @@ export function bookingUrls(cancelToken: string): { cancelUrl: string; icsUrl: s
 
 export function buildConfirmationEmail(i: BookingEmailInput): BuiltEmail {
   const when = fmtLong(i.startAt, i.timezone);
+  const gUrl = googleCalendarUrl({
+    title: `${i.serviceName} - ${i.businessName}`,
+    details: `Reserva en ${i.businessName} con ${i.staffName}`,
+    location: i.businessName,
+    start: i.startAt,
+    end: i.endAt,
+  });
   const subject = `Reserva confirmada: ${i.serviceName} · ${when} — ${i.businessName}`;
   const text = [
     `Hola ${i.customerName},`,
@@ -56,7 +66,8 @@ export function buildConfirmationEmail(i: BookingEmailInput): BuiltEmail {
     `· ${i.serviceName} con ${i.staffName}`,
     `· ${when} (${i.timezone})`,
     ``,
-    `Añadir al calendario: ${i.icsUrl}`,
+    `Añadir a Google Calendar: ${gUrl}`,
+    `O descarga el archivo (.ics): ${i.icsUrl}`,
     `Cancelar (hasta el plazo del negocio): ${i.cancelUrl}`,
     ``,
     `Gracias por reservar.`,
@@ -65,13 +76,20 @@ export function buildConfirmationEmail(i: BookingEmailInput): BuiltEmail {
     `<p>Hola ${escHtml(i.customerName)},</p>`,
     `<p>Tu reserva en <strong>${escHtml(i.businessName)}</strong> está confirmada:</p>`,
     `<ul><li>${escHtml(i.serviceName)} con ${escHtml(i.staffName)}</li><li>${escHtml(when)} (${escHtml(i.timezone)})</li></ul>`,
-    `<p><a href="${escHtml(i.icsUrl)}">Añadir al calendario</a> · <a href="${escHtml(i.cancelUrl)}">Cancelar reserva</a></p>`,
+    `<p><a href="${escHtml(gUrl)}">Añadir a Google Calendar</a> · <a href="${escHtml(i.cancelUrl)}">Cancelar reserva</a></p>`,
   ].join("\n");
   return { subject, text, html };
 }
 
 export function buildReminderEmail(i: BookingEmailInput): BuiltEmail {
   const when = fmtLong(i.startAt, i.timezone);
+  const gUrl = googleCalendarUrl({
+    title: `${i.serviceName} - ${i.businessName}`,
+    details: `Reserva en ${i.businessName} con ${i.staffName}`,
+    location: i.businessName,
+    start: i.startAt,
+    end: i.endAt,
+  });
   const subject = `Recordatorio: ${i.serviceName} mañana · ${when} — ${i.businessName}`;
   const text = [
     `Hola ${i.customerName},`,
@@ -80,14 +98,15 @@ export function buildReminderEmail(i: BookingEmailInput): BuiltEmail {
     `· ${i.serviceName} con ${i.staffName}`,
     `· ${when} (${i.timezone})`,
     ``,
-    `Añadir al calendario: ${i.icsUrl}`,
+    `Añadir a Google Calendar: ${gUrl}`,
+    `O descarga el archivo (.ics): ${i.icsUrl}`,
     `Cancelar (hasta el plazo del negocio): ${i.cancelUrl}`,
   ].join("\n");
   const html = [
     `<p>Hola ${escHtml(i.customerName)},</p>`,
     `<p>Te recordamos tu cita de mañana en <strong>${escHtml(i.businessName)}</strong>:</p>`,
     `<ul><li>${escHtml(i.serviceName)} con ${escHtml(i.staffName)}</li><li>${escHtml(when)} (${escHtml(i.timezone)})</li></ul>`,
-    `<p><a href="${escHtml(i.icsUrl)}">Añadir al calendario</a> · <a href="${escHtml(i.cancelUrl)}">Cancelar reserva</a></p>`,
+    `<p><a href="${escHtml(gUrl)}">Añadir a Google Calendar</a> · <a href="${escHtml(i.cancelUrl)}">Cancelar reserva</a></p>`,
   ].join("\n");
   return { subject, text, html };
 }

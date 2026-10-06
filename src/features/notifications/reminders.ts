@@ -42,6 +42,7 @@ export async function sendDueReminders(now = new Date()): Promise<ReminderResult
       serviceName: a.service.name,
       staffName: a.staff.name,
       startAt: a.startAt,
+      endAt: a.endAt,
       timezone: a.business.timezone,
       customerName: a.customer.name,
       cancelUrl,

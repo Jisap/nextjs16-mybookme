@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 import { StaffManager } from "./manager";
+import { DashboardNav } from "../nav";
+import { BusinessBar } from "../business-bar";
 
 export default async function StaffPage({
   searchParams,
@@ -18,19 +19,13 @@ export default async function StaffPage({
   });
   if (memberships.length === 0) redirect("/dashboard");
   const sp = await searchParams;
-  const business =
-    memberships.find((m) => m.businessId === sp.businessId)?.business ?? memberships[0].business;
+  const membership = memberships.find((m) => m.businessId === sp.businessId) ?? memberships[0];
+  const business = membership.business;
   return (
     <main className="mx-auto max-w-2xl space-y-4 p-4">
       <h1 className="text-xl font-bold">Profesionales — {business.name}</h1>
-      <nav className="flex gap-2 text-sm">
-        <Link href="/dashboard" className="underline">
-          Citas
-        </Link>
-        <Link href={`/dashboard/services?businessId=${business.id}`} className="underline">
-          Servicios
-        </Link>
-      </nav>
+      <BusinessBar role={membership.role} userEmail={data.user.email!} slug={business.slug} />
+      <DashboardNav businessId={business.id} slug={business.slug} current="staff" />
       <StaffManager businessId={business.id} />
     </main>
   );

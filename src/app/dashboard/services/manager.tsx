@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Service {
   id: string;
@@ -59,30 +60,54 @@ export function ServicesManager({ businessId }: { businessId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre (ej. Manicura)"
-          className="flex-1"
-        />
-        <Input
-          value={duration}
-          onChange={(e) => setDuration(e.target.value)}
-          placeholder="Min"
-          inputMode="numeric"
-          className="w-20"
-        />
-        <Input
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="€"
-          inputMode="decimal"
-          className="w-20"
-        />
-        <Button onClick={create}>Añadir</Button>
-      </div>
-      {msg && <p className="text-sm text-red-700">{msg}</p>}
+      <form
+        className="flex flex-col gap-3 sm:flex-row sm:items-end"
+        onSubmit={(e) => {
+          e.preventDefault();
+          create();
+        }}
+      >
+        <div className="flex-1 space-y-1">
+          <Label htmlFor="svc-name">Servicio</Label>
+          <Input
+            id="svc-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre (ej. Manicura)"
+            autoComplete="off"
+          />
+        </div>
+        <div className="w-full space-y-1 sm:w-28">
+          <Label htmlFor="svc-duration">Duración (min)</Label>
+          <Input
+            id="svc-duration"
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            inputMode="numeric"
+            type="number"
+            min={5}
+            max={480}
+          />
+        </div>
+        <div className="w-full space-y-1 sm:w-28">
+          <Label htmlFor="svc-price">Precio (€)</Label>
+          <Input
+            id="svc-price"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            inputMode="decimal"
+            type="number"
+            min={0}
+            step="0.5"
+          />
+        </div>
+        <Button type="submit">Añadir</Button>
+      </form>
+      {msg && (
+        <p role="alert" className="text-sm text-red-700">
+          {msg}
+        </p>
+      )}
       <ul className="space-y-2">
         {list.map((s) => (
           <li key={s.id} className="flex items-center justify-between rounded border p-3">

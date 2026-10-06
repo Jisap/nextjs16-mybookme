@@ -1,0 +1,32 @@
+{
+  "business": {
+    "name": "Maria Nails",
+    "slug": "maria-nails",
+    "timezone": "Europe/Madrid",
+    "phone": "+34 600 000 000"
+  },
+  "settings": {
+    "slotIntervalMinutes": 15,
+    "bufferMinutes": 0,
+    "minimumAdvanceMinutes": 60,
+    "maximumAdvanceDays": 30,
+    "cancellationDeadlineMinutes": 120
+  },
+  "staff": [{ "name": "Maria" }, { "name": "Laura" }],
+  "services": [
+    { "name": "Manicura", "durationMinutes": 45, "priceCents": 2500 },
+    { "name": "Pedicura", "durationMinutes": 60, "priceCents": 3000 },
+    { "name": "Manicura + Pedicura", "durationMinutes": 90, "priceCents": 5000 }
+  ],
+  "staffServices": {
+    "Maria": ["Manicura", "Pedicura", "Manicura + Pedicura"],
+    "Laura": ["Manicura"]
+  },
+  "workingHours": {
+    "days": [1, 2, 3, 4, 5],
+    "intervals": [
+      { "startTime": "09:00", "endTime": "14:00" },
+      { "startTime": "16:00", "endTime": "20:00" }
+    ]
+  }
+}

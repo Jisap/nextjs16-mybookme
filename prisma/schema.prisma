@@ -1,0 +1,215 @@
+// Prisma schema v0 — Fase 0 (Paso 03)
+// Decisiones: docs/ADR-001, ADR-002, ADR-003
+// Nota: la exclusion constraint no la genera Prisma → ver prisma/manual-exclusion.sql
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum BusinessMemberRole {
+  OWNER
+  STAFF
+}
+
+enum ScheduleExceptionType {
+  CLOSED
+  OPEN
+  BLOCKED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  phone       String?
+  email       String?
+  timezone    String   @default("Europe/Madrid")
+  address     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members    BusinessMember[]
+  settings   BusinessSettings?
+  staff      Staff[]
+  services   Service[]
+  customers  Customer[]
+  appointments Appointment[]
+  workingHours WorkingHours[]
+  exceptions ScheduleException[]
+}
+
+model User {
+  // id = auth.users.id (Supabase Auth, uuid) — ver ADR-001
+  id        String   @id @db.Uuid
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships BusinessMember[]
+}
+
+model BusinessMember {
+  id         String              @id @default(cuid())
+  businessId String
+  userId     String              @db.Uuid
+  role       BusinessMemberRole  @default(STAFF)
+  createdAt  DateTime            @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, userId])
+  @@index([userId])
+}
+
+model BusinessSettings {
+  businessId String @id
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  slotIntervalMinutes         Int @default(15)
+  bufferMinutes               Int @default(0)
+  minimumAdvanceMinutes       Int @default(60)
+  maximumAdvanceDays          Int @default(30)
+  cancellationDeadlineMinutes Int @default(120)
+}
+
+model Staff {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  email      String?
+  phone      String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  services StaffService[]
+  appointments Appointment[]
+  workingHours WorkingHours[]
+  exceptions ScheduleException[]
+
+  @@index([businessId, active])
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  businessId      String
+  name            String
+  description     String?
+  durationMinutes Int
+  priceCents      Int      @default(0)
+  currency        String   @default("EUR")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staff    StaffService[]
+  appointments Appointment[]
+
+  @@index([businessId, active])
+}
+
+model StaffService {
+  staffId   String
+  serviceId String
+
+  staff   Staff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([staffId, serviceId])
+  @@index([serviceId])
+}
+
+model WorkingHours {
+  id         String  @id @default(cuid())
+  businessId String
+  staffId    String? // null = horario general del negocio
+  dayOfWeek  Int     // 0=Domingo … 6=Sábado (= EXTRACT(DOW))
+  startTime  String  // HH:mm local negocio, ej "09:00"
+  endTime    String  // HH:mm local negocio, ej "14:00"
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staff    Staff?   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, dayOfWeek])
+  @@index([staffId, dayOfWeek])
+}
+
+model ScheduleException {
+  id         String                 @id @default(cuid())
+  businessId String
+  staffId    String?                // null = afecta a todo el negocio
+  date       DateTime               @db.Date
+  startTime  String?                // null + CLOSED = día entero; obligatorio en BLOCKED/OPEN
+  endTime    String?
+  type       ScheduleExceptionType
+  reason     String?
+  createdAt  DateTime               @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staff    Staff?   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, date])
+  @@index([staffId, date])
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  email      String?
+  phone      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([businessId, phone])
+  @@index([businessId, email])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  businessId     String
+  serviceId      String
+  staffId        String
+  customerId     String
+  startAt        DateTime          @db.Timestamptz(6)
+  endAt          DateTime          @db.Timestamptz(6)
+  blockedUntil   DateTime          @db.Timestamptz(6) // endAt + buffer, es lo que bloquea (ADR-002)
+  status         AppointmentStatus @default(PENDING)
+  notes          String?
+  idempotencyKey String?           // UUID generado por cliente (ADR-002)
+  cancelToken    String            @unique @default(cuid()) // enlace seguro cancelación futura
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  staff    Staff    @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@unique([businessId, idempotencyKey])
+  @@index([businessId, staffId, startAt])
+  @@index([businessId, status, startAt])
+  @@index([staffId, startAt])
+}

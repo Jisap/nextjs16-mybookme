@@ -32,7 +32,7 @@ async function main() {
   const now = new Date();
   const nextMonday = new Date(now);
   const dow = now.getDay();
-  const add = ((8 - dow) % 7) || 7;
+  const add = (8 - dow) % 7 || 7;
   nextMonday.setDate(now.getDate() + add);
   const dateStr = nextMonday.toISOString().slice(0, 10);
   const dateDow = new Date(`${dateStr}T12:00:00Z`).getUTCDay();
@@ -44,7 +44,9 @@ async function main() {
   });
 
   const avail = await getPublicAvailability(SLUG, service.id, dateStr, staff.id);
-  console.log(`slots:${avail.slots.length} date:${dateStr} first:${avail.slots[0]?.start ?? "none"}`);
+  console.log(
+    `slots:${avail.slots.length} date:${dateStr} first:${avail.slots[0]?.start ?? "none"}`
+  );
   if (avail.slots.length === 0) throw new Error("sin slots, no se puede probar");
 
   const target = avail.slots[0].start;
@@ -57,10 +59,17 @@ async function main() {
     idempotencyKey: crypto.randomUUID(),
   });
 
-  const [a, c] = await Promise.allSettled([createPublicAppointment(SLUG, payload(1)), createPublicAppointment(SLUG, payload(2))]);
+  const [a, c] = await Promise.allSettled([
+    createPublicAppointment(SLUG, payload(1)),
+    createPublicAppointment(SLUG, payload(2)),
+  ]);
   const ok = [a, c].filter((r) => r.status === "fulfilled").length;
   const taken = [a, c].filter(
-    (r) => r.status === "rejected" && String((r as PromiseRejectedResult).reason?.message ?? (r as PromiseRejectedResult).reason).includes("Hueco"),
+    (r) =>
+      r.status === "rejected" &&
+      String(
+        (r as PromiseRejectedResult).reason?.message ?? (r as PromiseRejectedResult).reason
+      ).includes("Hueco")
   ).length;
   console.log(`concurrent: ok=${ok} slotTaken=${taken}`);
   for (const r of [a, c]) {
@@ -71,13 +80,25 @@ async function main() {
   // idempotencia: mismo key dos veces → 1 sola cita (usa slot lejano, no solapa con el 1º)
   const key = crypto.randomUUID();
   const secondSlot = avail.slots[10].start;
-  const idemPayload = { serviceId: service.id, staffId: staff.id, startAt: secondSlot, name: "Cliente idem", phone: "+34600999999", idempotencyKey: key };
+  const idemPayload = {
+    serviceId: service.id,
+    staffId: staff.id,
+    startAt: secondSlot,
+    name: "Cliente idem",
+    phone: "+34600999999",
+    idempotencyKey: key,
+  };
   const first = await createPublicAppointment(SLUG, idemPayload);
   const second = await createPublicAppointment(SLUG, idemPayload);
-  const count = await prisma.appointment.count({ where: { businessId: b.id, idempotencyKey: key } });
-  console.log(`idempotency: first=${first.appointment.id} dedupedSecond=${second.deduped} count=${count}`);
+  const count = await prisma.appointment.count({
+    where: { businessId: b.id, idempotencyKey: key },
+  });
+  console.log(
+    `idempotency: first=${first.appointment.id} dedupedSecond=${second.deduped} count=${count}`
+  );
 
-  if (ok !== 1 || taken !== 1) throw new Error("FAIL doble reserva: se esperaba 1 ok + 1 SLOT_TAKEN");
+  if (ok !== 1 || taken !== 1)
+    throw new Error("FAIL doble reserva: se esperaba 1 ok + 1 SLOT_TAKEN");
   if (count !== 1 || second.deduped !== true) throw new Error("FAIL idempotencia");
   console.log("PROOF OK");
   await cleanup();

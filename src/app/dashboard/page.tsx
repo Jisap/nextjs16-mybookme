@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { formatInTimeZone } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
@@ -28,14 +29,20 @@ export default async function DashboardPage({
     return (
       <main className="mx-auto max-w-md p-6">
         <h1 className="text-xl font-bold">Sin negocios</h1>
-        <p className="mt-2 text-sm">Tu usuario ({data.user.email}) aún no tiene acceso a ningún negocio.</p>
-        <p className="mt-2 text-sm text-gray-600">Pide al owner que te añada, o vincula el seed demo con: npm run link:owner -- email={data.user.email}</p>
+        <p className="mt-2 text-sm">
+          Tu usuario ({data.user.email}) aún no tiene acceso a ningún negocio.
+        </p>
+        <p className="mt-2 text-sm text-gray-600">
+          Pide al owner que te añada, o vincula el seed demo con: npm run link:owner -- email=
+          {data.user.email}
+        </p>
       </main>
     );
   }
 
   const sp = await searchParams;
-  const business = memberships.find((m) => m.businessId === sp.businessId)?.business ?? memberships[0].business;
+  const business =
+    memberships.find((m) => m.businessId === sp.businessId)?.business ?? memberships[0].business;
   const todayStr = formatInTimeZone(new Date(), business.timezone, "yyyy-MM-dd");
 
   const appts = await prisma.appointment.findMany({
@@ -49,16 +56,20 @@ export default async function DashboardPage({
     <main className="mx-auto max-w-2xl space-y-4 p-4">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-bold">{business.name} — hoy</h1>
-        <a href="/book/maria-nails" className="text-sm underline">
+        <Link href="/book/maria-nails" className="text-sm underline">
           Ver página pública
-        </a>
+        </Link>
       </header>
       {memberships.length > 1 && (
         <nav className="flex gap-2 text-sm">
           {memberships.map((m) => (
-            <a key={m.businessId} href={`/dashboard?businessId=${m.businessId}`} className="rounded border px-2 py-1">
+            <Link
+              key={m.businessId}
+              href={`/dashboard?businessId=${m.businessId}`}
+              className="rounded border px-2 py-1"
+            >
               {m.business.name}
-            </a>
+            </Link>
           ))}
         </nav>
       )}
@@ -70,7 +81,13 @@ export default async function DashboardPage({
               {a.service.name} · {a.staff.name}
             </div>
             <div className="text-sm text-gray-600">
-              {new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: business.timezone }).format(a.startAt)}{" "}
+              {new Intl.DateTimeFormat("es-ES", {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: business.timezone,
+              }).format(a.startAt)}{" "}
               · {a.customer.name} {a.customer.phone ? `· ${a.customer.phone}` : ""} · {a.status}
             </div>
             <StatusButtons id={a.id} />

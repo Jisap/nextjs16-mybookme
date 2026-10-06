@@ -25,7 +25,10 @@ export async function GET(req: Request) {
     orderBy: { name: "asc" },
     include: { services: true },
   });
-  const services = await prisma.service.findMany({ where: { businessId, active: true }, orderBy: { name: "asc" } });
+  const services = await prisma.service.findMany({
+    where: { businessId, active: true },
+    orderBy: { name: "asc" },
+  });
   return NextResponse.json({ staff, services });
 }
 
@@ -33,7 +36,8 @@ export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   const parsed = createBody.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: "VALIDATION", issues: parsed.error.issues }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: "VALIDATION", issues: parsed.error.issues }, { status: 400 });
   try {
     await requireBusinessAccess(user.id, parsed.data.businessId, ["OWNER"]);
   } catch {
@@ -41,8 +45,11 @@ export async function POST(req: Request) {
   }
   // valida que los servicios son del mismo negocio
   if (parsed.data.serviceIds.length > 0) {
-    const count = await prisma.service.count({ where: { businessId: parsed.data.businessId, id: { in: parsed.data.serviceIds } } });
-    if (count !== parsed.data.serviceIds.length) return NextResponse.json({ error: "SERVICE_INVALID" }, { status: 400 });
+    const count = await prisma.service.count({
+      where: { businessId: parsed.data.businessId, id: { in: parsed.data.serviceIds } },
+    });
+    if (count !== parsed.data.serviceIds.length)
+      return NextResponse.json({ error: "SERVICE_INVALID" }, { status: 400 });
   }
   const st = await prisma.staff.create({
     data: {

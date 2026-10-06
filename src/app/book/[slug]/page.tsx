@@ -1,6 +1,9 @@
 "use client";
 
 import { use, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface Staff {
   id: string;
@@ -23,10 +26,19 @@ interface Slot {
 }
 
 function fmtTime(iso: string, tz: string) {
-  return new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: tz }).format(new Date(iso));
+  return new Intl.DateTimeFormat("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: tz,
+  }).format(new Date(iso));
 }
 function fmtDate(iso: string, tz: string) {
-  return new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: tz }).format(new Date(iso));
+  return new Intl.DateTimeFormat("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: tz,
+  }).format(new Date(iso));
 }
 function toYMD(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -46,7 +58,9 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [done, setDone] = useState<{ service: string; start: string; cancelToken: string } | null>(null);
+  const [done, setDone] = useState<{ service: string; start: string; cancelToken: string } | null>(
+    null
+  );
 
   useEffect(() => {
     fetch(`/api/public/${slug}/services`)
@@ -102,17 +116,29 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
       });
       const j = await r.json();
       if (!r.ok) {
-        setMsg({ ok: false, text: j.error === "SLOT_TAKEN" ? "Ese hueco se acaba de ocupar, elige otro" : "No se pudo reservar" });
+        setMsg({
+          ok: false,
+          text:
+            j.error === "SLOT_TAKEN"
+              ? "Ese hueco se acaba de ocupar, elige otro"
+              : "No se pudo reservar",
+        });
         // refresca slots tras 409
         if (j.error === "SLOT_TAKEN") {
-          const av = await fetch(`/api/public/${slug}/availability?serviceId=${serviceId}&date=${date}&staffId=${staffId}`).then((x) => x.json());
+          const av = await fetch(
+            `/api/public/${slug}/availability?serviceId=${serviceId}&date=${date}&staffId=${staffId}`
+          ).then((x) => x.json());
           setSlots(av.slots ?? []);
           setSlot("");
         }
         return;
       }
       const svc = services.find((s) => s.id === serviceId);
-      setDone({ service: svc?.name ?? "", start: j.appointment?.startAt ?? slot, cancelToken: j.appointment?.cancelToken ?? "" });
+      setDone({
+        service: svc?.name ?? "",
+        start: j.appointment?.startAt ?? slot,
+        cancelToken: j.appointment?.cancelToken ?? "",
+      });
     } finally {
       setLoading(false);
     }
@@ -125,18 +151,22 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
         <p className="mt-4">{done.service}</p>
         <p className="capitalize">{fmtDate(done.start, biz.timezone)}</p>
         <p>{fmtTime(done.start, biz.timezone)}</p>
-        <p className="mt-2 text-sm text-gray-600">{biz.name} · {name}</p>
+        <p className="mt-2 text-sm text-gray-600">
+          {biz.name} · {name}
+        </p>
         {done.cancelToken && (
           <div className="space-y-2 pt-2">
-            <a
-              href={`/api/public/appointments/by-token/${done.cancelToken}/ics`}
-              className="block rounded bg-black p-3 text-center text-white"
+            <Button asChild className="w-full">
+              <a href={`/api/public/appointments/by-token/${done.cancelToken}/ics`}>
+                Añadir al calendario
+              </a>
+            </Button>
+            <Link
+              href={`/book/cancel/${done.cancelToken}`}
+              className="block text-center text-sm underline"
             >
-              Añadir al calendario
-            </a>
-            <a href={`/book/cancel/${done.cancelToken}`} className="block text-center text-sm underline">
               Cancelar reserva
-            </a>
+            </Link>
           </div>
         )}
       </main>
@@ -147,7 +177,9 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
     <main className="mx-auto max-w-md space-y-5 p-4 pb-16">
       <header>
         <h1 className="text-xl font-bold">{biz?.name ?? "Reservar"}</h1>
-        <p className="text-sm text-gray-600">Elige servicio, profesional, fecha y hora. Sin crear cuenta.</p>
+        <p className="text-sm text-gray-600">
+          Elige servicio, profesional, fecha y hora. Sin crear cuenta.
+        </p>
       </header>
 
       <section>
@@ -159,8 +191,12 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
               onClick={() => setServiceId(s.id)}
               className={`rounded border p-3 text-left ${serviceId === s.id ? "border-black bg-gray-50" : ""}`}
             >
-              <div className="font-medium">{s.name} · {s.durationMinutes} min</div>
-              <div className="text-sm text-gray-600">{(s.priceCents / 100).toFixed(2)} {s.currency}</div>
+              <div className="font-medium">
+                {s.name} · {s.durationMinutes} min
+              </div>
+              <div className="text-sm text-gray-600">
+                {(s.priceCents / 100).toFixed(2)} {s.currency}
+              </div>
             </button>
           ))}
         </div>
@@ -169,11 +205,18 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
       <section>
         <h2 className="mb-1 text-sm font-semibold">2. Profesional</h2>
         <div className="flex flex-wrap gap-2">
-          <button onClick={() => setStaffId("any")} className={`rounded border px-3 py-2 ${staffId === "any" ? "border-black bg-gray-50" : ""}`}>
+          <button
+            onClick={() => setStaffId("any")}
+            className={`rounded border px-3 py-2 ${staffId === "any" ? "border-black bg-gray-50" : ""}`}
+          >
             Cualquiera
           </button>
           {eligibleStaff.map((st) => (
-            <button key={st.id} onClick={() => setStaffId(st.id)} className={`rounded border px-3 py-2 ${staffId === st.id ? "border-black bg-gray-50" : ""}`}>
+            <button
+              key={st.id}
+              onClick={() => setStaffId(st.id)}
+              className={`rounded border px-3 py-2 ${staffId === st.id ? "border-black bg-gray-50" : ""}`}
+            >
               {st.name}
             </button>
           ))}
@@ -182,12 +225,16 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
 
       <section>
         <h2 className="mb-1 text-sm font-semibold">3. Fecha</h2>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full rounded border p-2" />
+        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </section>
 
       <section>
-        <h2 className="mb-1 text-sm font-semibold">4. Hora {loading && <span className="font-normal">(cargando…)</span>}</h2>
-        {slots.length === 0 && !loading && <p className="text-sm text-gray-600">Sin huecos ese día, prueba otra fecha.</p>}
+        <h2 className="mb-1 text-sm font-semibold">
+          4. Hora {loading && <span className="font-normal">(cargando…)</span>}
+        </h2>
+        {slots.length === 0 && !loading && (
+          <p className="text-sm text-gray-600">Sin huecos ese día, prueba otra fecha.</p>
+        )}
         <div className="grid grid-cols-3 gap-2">
           {slots.map((s) => (
             <button
@@ -203,11 +250,22 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">5. Tus datos</h2>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" className="w-full rounded border p-2" />
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono" inputMode="tel" className="w-full rounded border p-2" />
-        <button onClick={submit} disabled={loading || !slot} className="w-full rounded bg-black p-3 text-white disabled:opacity-40">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre"
+          autoComplete="name"
+        />
+        <Input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Teléfono"
+          inputMode="tel"
+          autoComplete="tel"
+        />
+        <Button onClick={submit} disabled={loading || !slot} className="w-full">
           Confirmar reserva
-        </button>
+        </Button>
         {msg && <p className={msg.ok ? "text-green-700" : "text-red-700"}>{msg.text}</p>}
       </section>
     </main>

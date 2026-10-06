@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function valid() {
     if (!email.trim() || !password) {
@@ -19,32 +26,72 @@ export default function LoginPage() {
   async function signIn() {
     setMsg("");
     if (!valid()) return;
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error) setMsg(error.message);
-    else window.location.href = "/dashboard";
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) setMsg(error.message);
+      else router.push("/dashboard");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function signUp() {
     setMsg("");
     if (!valid()) return;
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({ email: email.trim(), password });
-    setMsg(error ? error.message : "Cuenta creada, ya puedes entrar. Si pide confirmar email, revísalo.");
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signUp({ email: email.trim(), password });
+      setMsg(
+        error
+          ? error.message
+          : "Cuenta creada, ya puedes entrar. Si pide confirmar email, revísalo."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <main className="mx-auto max-w-sm space-y-3 p-6">
-      <h1 className="text-xl font-bold">Entrar al panel</h1>
-      <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" type="email" className="w-full rounded border p-2" />
-      <input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" type="password" className="w-full rounded border p-2" />
-      <button onClick={signIn} className="w-full rounded bg-black p-3 text-white">
-        Entrar
-      </button>
-      <button onClick={signUp} className="w-full rounded border p-3">
-        Crear cuenta
-      </button>
-      {msg && <p className="text-sm text-gray-700">{msg}</p>}
+    <main className="mx-auto max-w-sm p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Entrar al panel</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              type="email"
+              autoComplete="email"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="password">Contraseña</Label>
+            <Input
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              type="password"
+              autoComplete="current-password"
+            />
+          </div>
+          <Button onClick={signIn} disabled={loading} className="w-full">
+            {loading ? "Entrando…" : "Entrar"}
+          </Button>
+          <Button onClick={signUp} disabled={loading} variant="outline" className="w-full">
+            Crear cuenta
+          </Button>
+          {msg && <p className="text-sm text-neutral-700">{msg}</p>}
+        </CardContent>
+      </Card>
     </main>
   );
 }

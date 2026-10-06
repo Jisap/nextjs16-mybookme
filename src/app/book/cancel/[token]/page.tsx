@@ -21,7 +21,14 @@ export default async function CancelPage({ params }: { params: Promise<{ token: 
         {a.service.name} con {a.staff.name}
       </p>
       <p className="text-sm text-gray-600">
-        {new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", timeZone: a.business.timezone }).format(a.startAt)}{" "}
+        {new Intl.DateTimeFormat("es-ES", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: a.business.timezone,
+        }).format(a.startAt)}{" "}
         · {a.business.name}
       </p>
       <CancelButton token={token} />

@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
-const ACTIONS: { label: string; status: string }[] = [
-  { label: "Confirmar", status: "CONFIRMED" },
-  { label: "Cancelar", status: "CANCELLED" },
-  { label: "Completar", status: "COMPLETED" },
-  { label: "No-show", status: "NO_SHOW" },
+const ACTIONS: {
+  label: string;
+  status: string;
+  variant: "outline" | "secondary" | "destructive";
+}[] = [
+  { label: "Confirmar", status: "CONFIRMED", variant: "secondary" },
+  { label: "Cancelar", status: "CANCELLED", variant: "outline" },
+  { label: "Completar", status: "COMPLETED", variant: "secondary" },
+  { label: "No-show", status: "NO_SHOW", variant: "destructive" },
 ];
 
 export function StatusButtons({ id }: { id: string }) {
@@ -28,9 +33,9 @@ export function StatusButtons({ id }: { id: string }) {
   return (
     <div className="mt-2 flex flex-wrap gap-2">
       {ACTIONS.map((a) => (
-        <button key={a.status} onClick={() => patch(a.status)} className="rounded border px-2 py-1 text-xs">
+        <Button key={a.status} onClick={() => patch(a.status)} variant={a.variant} size="sm">
           {a.label}
-        </button>
+        </Button>
       ))}
       {msg && <span className="text-xs text-red-700">{msg}</span>}
     </div>

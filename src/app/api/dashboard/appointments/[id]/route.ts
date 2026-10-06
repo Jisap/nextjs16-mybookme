@@ -25,6 +25,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (!isValidTransition(appt.status, parsed.data.status)) {
     return NextResponse.json({ error: "INVALID_TRANSITION" }, { status: 400 });
   }
-  const updated = await prisma.appointment.update({ where: { id }, data: { status: parsed.data.status } });
+  const updated = await prisma.appointment.update({
+    where: { id },
+    data: { status: parsed.data.status },
+  });
   return NextResponse.json({ appointment: { id: updated.id, status: updated.status } });
 }

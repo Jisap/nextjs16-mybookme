@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface Service {
   id: string;
@@ -23,6 +25,7 @@ export function ServicesManager({ businessId }: { businessId: string }) {
   }
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [businessId]);
 
   async function create() {
@@ -57,23 +60,39 @@ export function ServicesManager({ businessId }: { businessId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (ej. Manicura)" className="flex-1 rounded border p-2" />
-        <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Min" inputMode="numeric" className="w-20 rounded border p-2" />
-        <input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="€" inputMode="decimal" className="w-20 rounded border p-2" />
-        <button onClick={create} className="rounded bg-black px-4 text-white">
-          Añadir
-        </button>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre (ej. Manicura)"
+          className="flex-1"
+        />
+        <Input
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+          placeholder="Min"
+          inputMode="numeric"
+          className="w-20"
+        />
+        <Input
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          placeholder="€"
+          inputMode="decimal"
+          className="w-20"
+        />
+        <Button onClick={create}>Añadir</Button>
       </div>
       {msg && <p className="text-sm text-red-700">{msg}</p>}
       <ul className="space-y-2">
         {list.map((s) => (
           <li key={s.id} className="flex items-center justify-between rounded border p-3">
             <span>
-              {s.name} · {s.durationMinutes} min · {(s.priceCents / 100).toFixed(2)}€ {s.active ? "" : "(inactivo)"}
+              {s.name} · {s.durationMinutes} min · {(s.priceCents / 100).toFixed(2)}€{" "}
+              {s.active ? "" : "(inactivo)"}
             </span>
-            <button onClick={() => toggle(s)} className="rounded border px-2 py-1 text-xs">
+            <Button onClick={() => toggle(s)} variant="outline" size="sm">
               {s.active ? "Desactivar" : "Activar"}
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

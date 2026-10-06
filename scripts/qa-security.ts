@@ -1,7 +1,11 @@
 import { randomUUID } from "crypto";
 import { prisma } from "../src/lib/db";
 import { requireBusinessAccess } from "../src/lib/auth";
-import { createPublicAppointment, getPublicAvailability, PublicBookingError } from "../src/features/booking/service";
+import {
+  createPublicAppointment,
+  getPublicAvailability,
+  PublicBookingError,
+} from "../src/features/booking/service";
 import { isValidTransition } from "../src/features/appointments/transitions";
 
 const A = "qa-tenant-a";
@@ -26,7 +30,9 @@ async function cleanup() {
     await prisma.service.deleteMany({ where: { businessId: b.id } });
     await prisma.staff.deleteMany({ where: { businessId: b.id } });
     await prisma.businessSettings.deleteMany({ where: { businessId: b.id } });
-    await prisma.user.deleteMany({ where: { memberships: { some: { businessId: b.id } } } }).catch(() => {});
+    await prisma.user
+      .deleteMany({ where: { memberships: { some: { businessId: b.id } } } })
+      .catch(() => {});
     await prisma.business.delete({ where: { id: b.id } });
   }
 }
@@ -35,9 +41,13 @@ async function mkTenant(slug: string) {
   const b = await prisma.business.create({ data: { name: slug, slug, timezone: "Europe/Madrid" } });
   await prisma.businessSettings.create({ data: { businessId: b.id } });
   const staff = await prisma.staff.create({ data: { businessId: b.id, name: "Staff" } });
-  const service = await prisma.service.create({ data: { businessId: b.id, name: "Svc", durationMinutes: 30 } });
+  const service = await prisma.service.create({
+    data: { businessId: b.id, name: "Svc", durationMinutes: 30 },
+  });
   await prisma.staffService.create({ data: { staffId: staff.id, serviceId: service.id } });
-  await prisma.workingHours.create({ data: { businessId: b.id, dayOfWeek: 1, startTime: "09:00", endTime: "18:00" } });
+  await prisma.workingHours.create({
+    data: { businessId: b.id, dayOfWeek: 1, startTime: "09:00", endTime: "18:00" },
+  });
   return { b, staff, service };
 }
 
@@ -51,7 +61,10 @@ async function main() {
     await getPublicAvailability(A, tB.service.id, "2026-10-12", "any");
     throw new Error("FAIL: cross-service debería fallar");
   } catch (e) {
-    check("cross-tenant service → SERVICE_INVALID", e instanceof PublicBookingError && e.code === "SERVICE_INVALID");
+    check(
+      "cross-tenant service → SERVICE_INVALID",
+      e instanceof PublicBookingError && e.code === "SERVICE_INVALID"
+    );
   }
 
   // 2. staff de B no válido vía slug A
@@ -59,7 +72,10 @@ async function main() {
     await getPublicAvailability(A, tA.service.id, "2026-10-12", tB.staff.id);
     throw new Error("FAIL: cross-staff debería fallar");
   } catch (e) {
-    check("cross-tenant staff → STAFF_INVALID", e instanceof PublicBookingError && e.code === "STAFF_INVALID");
+    check(
+      "cross-tenant staff → STAFF_INVALID",
+      e instanceof PublicBookingError && e.code === "STAFF_INVALID"
+    );
   }
 
   // 3. Booking ignora businessId del cliente: el schema no lo acepta
@@ -78,7 +94,9 @@ async function main() {
   // 4. Miembro de A no puede tocar negocio B (403)
   const fakeUserId = randomUUID();
   await prisma.user.create({ data: { id: fakeUserId, email: `qa-${Date.now()}@test.local` } });
-  await prisma.businessMember.create({ data: { businessId: tA.b.id, userId: fakeUserId, role: "OWNER" } });
+  await prisma.businessMember.create({
+    data: { businessId: tA.b.id, userId: fakeUserId, role: "OWNER" },
+  });
   try {
     await requireBusinessAccess(fakeUserId, tB.b.id);
     throw new Error("FAIL: cross-member debería 403");
@@ -91,11 +109,16 @@ async function main() {
     void s;
     const u2 = randomUUID();
     await prisma.user.create({ data: { id: u2, email: `qa2-${Date.now()}@test.local` } });
-    await prisma.businessMember.create({ data: { businessId: tB.b.id, userId: u2, role: "STAFF" } });
+    await prisma.businessMember.create({
+      data: { businessId: tB.b.id, userId: u2, role: "STAFF" },
+    });
     await requireBusinessAccess(u2, tB.b.id, ["OWNER"]);
     throw new Error("FAIL: STAFF con rol OWNER debería 403");
   } catch (e) {
-    check("rol insuficiente → 403", (e as Error).message === "FORBIDDEN_ROLE" || (e as Error & { status?: number }).status === 403);
+    check(
+      "rol insuficiente → 403",
+      (e as Error).message === "FORBIDDEN_ROLE" || (e as Error & { status?: number }).status === 403
+    );
   }
 
   // 5. Transiciones inválidas bloqueadas
@@ -104,7 +127,12 @@ async function main() {
 
   // 6. Validación: sin phone ni email rechaza (Zod en ruta; aquí direct check del schema)
   const { createAppointmentBody } = await import("../src/features/booking/schema");
-  const bad = createAppointmentBody.safeParse({ serviceId: "x", staffId: "any", startAt: new Date().toISOString(), name: "N" });
+  const bad = createAppointmentBody.safeParse({
+    serviceId: "x",
+    staffId: "any",
+    startAt: new Date().toISOString(),
+    name: "N",
+  });
   check("sin contacto → validation error", bad.success === false);
 
   console.log(`QA OK (${pass} checks)`);

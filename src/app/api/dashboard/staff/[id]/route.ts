@@ -26,13 +26,22 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   }
   const { serviceIds, ...rest } = parsed.data;
   if (serviceIds) {
-    const count = await prisma.service.count({ where: { businessId: st.businessId, id: { in: serviceIds } } });
-    if (count !== serviceIds.length) return NextResponse.json({ error: "SERVICE_INVALID" }, { status: 400 });
+    const count = await prisma.service.count({
+      where: { businessId: st.businessId, id: { in: serviceIds } },
+    });
+    if (count !== serviceIds.length)
+      return NextResponse.json({ error: "SERVICE_INVALID" }, { status: 400 });
     await prisma.$transaction([
       prisma.staffService.deleteMany({ where: { staffId: id } }),
-      ...serviceIds.map((serviceId) => prisma.staffService.create({ data: { staffId: id, serviceId } })),
+      ...serviceIds.map((serviceId) =>
+        prisma.staffService.create({ data: { staffId: id, serviceId } })
+      ),
     ]);
   }
-  const updated = await prisma.staff.update({ where: { id }, data: rest, include: { services: true } });
+  const updated = await prisma.staff.update({
+    where: { id },
+    data: rest,
+    include: { services: true },
+  });
   return NextResponse.json({ staff: updated });
 }

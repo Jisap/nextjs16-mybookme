@@ -50,7 +50,9 @@ export function StaffManager({ businessId }: { businessId: string }) {
 
   async function toggleServices(st: Staff, serviceId: string) {
     const has = st.services.some((s) => s.serviceId === serviceId);
-    const serviceIds = has ? st.services.filter((s) => s.serviceId !== serviceId).map((s) => s.serviceId) : [...st.services.map((s) => s.serviceId), serviceId];
+    const serviceIds = has
+      ? st.services.filter((s) => s.serviceId !== serviceId).map((s) => s.serviceId)
+      : [...st.services.map((s) => s.serviceId), serviceId];
     await fetch(`/api/dashboard/staff/${st.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -71,14 +73,23 @@ export function StaffManager({ businessId }: { businessId: string }) {
   return (
     <div className="space-y-4">
       <div className="space-y-2 rounded border p-3">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (ej. María)" className="w-full rounded border p-2" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nombre (ej. María)"
+          className="w-full rounded border p-2"
+        />
         <div className="flex flex-wrap gap-2">
           {services.map((s) => (
             <label key={s.id} className="flex items-center gap-1 text-sm">
               <input
                 type="checkbox"
                 checked={checked.includes(s.id)}
-                onChange={() => setChecked(checked.includes(s.id) ? checked.filter((x) => x !== s.id) : [...checked, s.id])}
+                onChange={() =>
+                  setChecked(
+                    checked.includes(s.id) ? checked.filter((x) => x !== s.id) : [...checked, s.id]
+                  )
+                }
               />
               {s.name}
             </label>

@@ -1,10 +1,12 @@
 import { prisma } from "../src/lib/db";
 
 // Uso: npm run link:owner -- email=tu@email.com slug=maria-nails role=OWNER
-const args = Object.fromEntries(process.argv.slice(2).map((a) => {
-  const [k, v] = a.split("=");
-  return [k, v];
-}));
+const args = Object.fromEntries(
+  process.argv.slice(2).map((a) => {
+    const [k, v] = a.split("=");
+    return [k, v];
+  })
+);
 const email = args.email as string | undefined;
 const slug = (args.slug as string | undefined) ?? "maria-nails";
 const role = ((args.role as string | undefined) ?? "OWNER").toUpperCase() as "OWNER" | "STAFF";

@@ -21,7 +21,10 @@ export async function GET(req: Request) {
   } catch {
     return NextResponse.json({ error: "FORBIDDEN" }, { status: 403 });
   }
-  const services = await prisma.service.findMany({ where: { businessId }, orderBy: { name: "asc" } });
+  const services = await prisma.service.findMany({
+    where: { businessId },
+    orderBy: { name: "asc" },
+  });
   return NextResponse.json({ services });
 }
 
@@ -29,7 +32,8 @@ export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   const parsed = createBody.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: "VALIDATION", issues: parsed.error.issues }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: "VALIDATION", issues: parsed.error.issues }, { status: 400 });
   try {
     await requireBusinessAccess(user.id, parsed.data.businessId, ["OWNER"]);
   } catch {

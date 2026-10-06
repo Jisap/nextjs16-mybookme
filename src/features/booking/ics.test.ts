@@ -19,7 +19,12 @@ describe("ics", () => {
     expect(ics).toContain("END:VEVENT");
   });
   it("escapa comas y puntos y coma", () => {
-    const ics = buildIcs({ uid: "x", summary: "A;B,C", start: new Date("2026-10-12T07:00:00Z"), end: new Date("2026-10-12T08:00:00Z") });
+    const ics = buildIcs({
+      uid: "x",
+      summary: "A;B,C",
+      start: new Date("2026-10-12T07:00:00Z"),
+      end: new Date("2026-10-12T08:00:00Z"),
+    });
     expect(ics).toContain("SUMMARY:A\\;B\\,C");
   });
 });

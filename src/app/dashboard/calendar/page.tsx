@@ -12,10 +12,14 @@ export default async function CalendarPage({
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/login");
-  const memberships = await prisma.businessMember.findMany({ where: { userId: data.user.id }, include: { business: true } });
+  const memberships = await prisma.businessMember.findMany({
+    where: { userId: data.user.id },
+    include: { business: true },
+  });
   if (memberships.length === 0) redirect("/dashboard");
   const sp = await searchParams;
-  const business = memberships.find((m) => m.businessId === sp.businessId)?.business ?? memberships[0].business;
+  const business =
+    memberships.find((m) => m.businessId === sp.businessId)?.business ?? memberships[0].business;
   const dateStr = sp.date ?? new Date().toISOString().slice(0, 10);
   const d = new Date(`${dateStr}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 1);
@@ -43,8 +47,12 @@ export default async function CalendarPage({
         {appts.map((a) => (
           <li key={a.id} className="rounded border p-3">
             <div className="font-medium">
-              {new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: business.timezone }).format(a.startAt)} ·{" "}
-              {a.service.name} · {a.staff.name}
+              {new Intl.DateTimeFormat("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+                timeZone: business.timezone,
+              }).format(a.startAt)}{" "}
+              · {a.service.name} · {a.staff.name}
             </div>
             <div className="text-sm text-gray-600">
               {a.customer.name} · {a.status}

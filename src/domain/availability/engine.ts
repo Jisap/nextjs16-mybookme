@@ -21,11 +21,13 @@ function baseIntervals(input: AvailabilityInput): Interval[] {
   const { dateStr, timezone, staffId, workingHours, exceptions } = input;
   const dow = dowOfDateStr(dateStr);
 
-  const dayExc = exceptions.filter((e) => e.date === dateStr && (e.staffId == null || e.staffId === staffId));
+  const dayExc = exceptions.filter(
+    (e) => e.date === dateStr && (e.staffId == null || e.staffId === staffId)
+  );
   if (dayExc.some((e) => e.type === "CLOSED" && !e.startTime && !e.endTime)) return [];
 
   const wh = workingHours.filter(
-    (w) => w.dayOfWeek === dow && (w.staffId == null || w.staffId === staffId),
+    (w) => w.dayOfWeek === dow && (w.staffId == null || w.staffId === staffId)
   );
   const base: Interval[] = wh.map((w) => ({
     start: localToUtc(dateStr, w.startTime, timezone),
@@ -34,7 +36,10 @@ function baseIntervals(input: AvailabilityInput): Interval[] {
 
   for (const e of dayExc) {
     if (e.type === "OPEN" && e.startTime && e.endTime) {
-      base.push({ start: localToUtc(dateStr, e.startTime, timezone), end: localToUtc(dateStr, e.endTime, timezone) });
+      base.push({
+        start: localToUtc(dateStr, e.startTime, timezone),
+        end: localToUtc(dateStr, e.endTime, timezone),
+      });
     }
   }
   return base
@@ -51,7 +56,10 @@ function busyIntervals(input: AvailabilityInput): Interval[] {
     if (e.date !== dateStr || !(e.staffId == null || e.staffId === staffId)) continue;
     if (e.type === "BLOCKED") {
       if (e.startTime && e.endTime) {
-        busy.push({ start: localToUtc(dateStr, e.startTime, timezone), end: localToUtc(dateStr, e.endTime, timezone) });
+        busy.push({
+          start: localToUtc(dateStr, e.startTime, timezone),
+          end: localToUtc(dateStr, e.endTime, timezone),
+        });
       } else {
         // BLOCKED sin horas = día entero
         busy.push({
@@ -61,7 +69,10 @@ function busyIntervals(input: AvailabilityInput): Interval[] {
       }
     }
     if (e.type === "CLOSED" && e.startTime && e.endTime) {
-      busy.push({ start: localToUtc(dateStr, e.startTime, timezone), end: localToUtc(dateStr, e.endTime, timezone) });
+      busy.push({
+        start: localToUtc(dateStr, e.startTime, timezone),
+        end: localToUtc(dateStr, e.endTime, timezone),
+      });
     }
   }
 
@@ -113,7 +124,7 @@ export function getAvailability(input: AvailabilityInput): Slot[] {
 
 /** "Cualquiera": une por staff en orden determinista, deduplica por start. */
 export function getAvailabilityAny(
-  input: Omit<AvailabilityInput, "staffId"> & { staffIds: string[] },
+  input: Omit<AvailabilityInput, "staffId"> & { staffIds: string[] }
 ): (Slot & { staffIds: string[] })[] {
   const byStart = new Map<number, { start: Date; end: Date; staffIds: string[] }>();
   const ordered = [...input.staffIds].sort();

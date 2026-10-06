@@ -9,7 +9,11 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
-export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfterSec: number; remaining: number } {
+export function rateLimit(
+  key: string,
+  limit: number,
+  windowMs: number
+): { ok: boolean; retryAfterSec: number; remaining: number } {
   const now = Date.now();
   const cur = buckets.get(key);
   if (!cur || cur.resetAt <= now) {

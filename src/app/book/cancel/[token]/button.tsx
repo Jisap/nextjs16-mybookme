@@ -10,7 +10,11 @@ export function CancelButton({ token }: { token: string }) {
     const r = await fetch(`/api/public/appointments/by-token/${token}/cancel`, { method: "POST" });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) {
-      setMsg(j.error === "TOO_LATE" ? "Ya no se puede cancelar (fuera de plazo o cerrada)" : "No se pudo cancelar");
+      setMsg(
+        j.error === "TOO_LATE"
+          ? "Ya no se puede cancelar (fuera de plazo o cerrada)"
+          : "No se pudo cancelar"
+      );
       return;
     }
     setGone(true);

@@ -22,7 +22,10 @@ export function subtractIntervals(base: Interval[], busy: Interval[]): Interval[
         }
         // recorte izquierdo
         if (c.start.getTime() < u.start.getTime()) {
-          next.push({ start: c.start, end: new Date(Math.min(c.end.getTime(), u.start.getTime())) });
+          next.push({
+            start: c.start,
+            end: new Date(Math.min(c.end.getTime(), u.start.getTime())),
+          });
         }
         // recorte derecho
         if (c.end.getTime() > u.end.getTime()) {

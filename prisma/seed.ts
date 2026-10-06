@@ -27,7 +27,12 @@ async function main() {
   const serviceIds: Record<string, string> = {};
   for (const s of data.services) {
     const sv = await prisma.service.create({
-      data: { businessId: b.id, name: s.name, durationMinutes: s.durationMinutes, priceCents: s.priceCents },
+      data: {
+        businessId: b.id,
+        name: s.name,
+        durationMinutes: s.durationMinutes,
+        priceCents: s.priceCents,
+      },
     });
     serviceIds[s.name] = sv.id;
   }
@@ -45,7 +50,7 @@ async function main() {
         dayOfWeek: dow,
         startTime: iv.startTime,
         endTime: iv.endTime,
-      })),
+      }))
     ),
   });
   console.log(`seed ok: ${b.name} /book/${slug}`);

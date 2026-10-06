@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/db";
 import { PublicBookingError } from "./service";
 
-export function canCancel(status: string, startAt: Date, deadlineMinutes: number, now = new Date()): boolean {
+export function canCancel(
+  status: string,
+  startAt: Date,
+  deadlineMinutes: number,
+  now = new Date()
+): boolean {
   if (status !== "PENDING" && status !== "CONFIRMED") return false;
   return startAt.getTime() - now.getTime() >= deadlineMinutes * 60_000;
 }

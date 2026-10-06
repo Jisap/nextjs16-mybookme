@@ -98,29 +98,47 @@ export function ScheduleManager({ businessId }: { businessId: string }) {
         {[0, 1, 2, 3, 4, 5, 6].map((d) => (
           <div key={d} className="rounded border p-2">
             <div className="text-sm font-medium">{DAYS[d]}</div>
-            {wh.filter((w) => w.dayOfWeek === d).length === 0 && <div className="text-xs text-gray-500">Cerrado</div>}
-            {wh.filter((w) => w.dayOfWeek === d).map((w) => (
-              <div key={w.id} className="flex items-center justify-between text-sm">
-                <span>
-                  {w.startTime}–{w.endTime}
-                </span>
-                <button onClick={() => delWH(w.id)} className="text-xs underline">
-                  Quitar
-                </button>
-              </div>
-            ))}
+            {wh.filter((w) => w.dayOfWeek === d).length === 0 && (
+              <div className="text-xs text-gray-500">Cerrado</div>
+            )}
+            {wh
+              .filter((w) => w.dayOfWeek === d)
+              .map((w) => (
+                <div key={w.id} className="flex items-center justify-between text-sm">
+                  <span>
+                    {w.startTime}–{w.endTime}
+                  </span>
+                  <button onClick={() => delWH(w.id)} className="text-xs underline">
+                    Quitar
+                  </button>
+                </div>
+              ))}
           </div>
         ))}
         <div className="flex gap-2">
-          <select value={day} onChange={(e) => setDay(e.target.value)} className="rounded border p-2">
+          <select
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            className="rounded border p-2"
+          >
             {DAYS.map((d, i) => (
               <option key={i} value={i}>
                 {d}
               </option>
             ))}
           </select>
-          <input value={start} onChange={(e) => setStart(e.target.value)} placeholder="09:00" className="w-24 rounded border p-2" />
-          <input value={end} onChange={(e) => setEnd(e.target.value)} placeholder="14:00" className="w-24 rounded border p-2" />
+          <input
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            placeholder="09:00"
+            className="w-24 rounded border p-2"
+          />
+          <input
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            placeholder="14:00"
+            className="w-24 rounded border p-2"
+          />
           <button onClick={addWH} className="rounded bg-black px-3 text-white">
             Añadir
           </button>
@@ -129,8 +147,17 @@ export function ScheduleManager({ businessId }: { businessId: string }) {
       <section className="space-y-2">
         <h2 className="font-semibold">Excepciones (vacaciones, festivos)</h2>
         <div className="flex gap-2">
-          <input type="date" value={edate} onChange={(e) => setEdate(e.target.value)} className="rounded border p-2" />
-          <select value={etype} onChange={(e) => setEtype(e.target.value)} className="rounded border p-2">
+          <input
+            type="date"
+            value={edate}
+            onChange={(e) => setEdate(e.target.value)}
+            className="rounded border p-2"
+          />
+          <select
+            value={etype}
+            onChange={(e) => setEtype(e.target.value)}
+            className="rounded border p-2"
+          >
             <option value="CLOSED">Cerrado</option>
             <option value="BLOCKED">Bloqueo parcial</option>
             <option value="OPEN">Apertura extra</option>
@@ -139,7 +166,11 @@ export function ScheduleManager({ businessId }: { businessId: string }) {
             Añadir
           </button>
         </div>
-        {etype !== "CLOSED" && <p className="text-xs text-gray-600">Usa las horas de arriba como inicio/fin del rango.</p>}
+        {etype !== "CLOSED" && (
+          <p className="text-xs text-gray-600">
+            Usa las horas de arriba como inicio/fin del rango.
+          </p>
+        )}
         <ul className="space-y-1">
           {exc.map((e) => (
             <li key={e.id} className="flex items-center justify-between rounded border p-2 text-sm">

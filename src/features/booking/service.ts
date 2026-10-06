@@ -98,9 +98,16 @@ async function loadDayContext(businessId: string, dateStr: string, tz: string) {
   };
 }
 
-export async function getPublicAvailability(slug: string, serviceId: string, dateStr: string, staffId: string) {
+export async function getPublicAvailability(
+  slug: string,
+  serviceId: string,
+  dateStr: string,
+  staffId: string
+) {
   const b = await getBusinessBySlug(slug);
-  const service = await prisma.service.findFirst({ where: { id: serviceId, businessId: b.id, active: true } });
+  const service = await prisma.service.findFirst({
+    where: { id: serviceId, businessId: b.id, active: true },
+  });
   if (!service) throw new PublicBookingError("SERVICE_INVALID", "Servicio no válido", 400);
 
   const ctx = await loadDayContext(b.id, dateStr, b.timezone);
@@ -127,7 +134,13 @@ export async function getPublicAvailability(slug: string, serviceId: string, dat
       throw new PublicBookingError("STAFF_INVALID", "Profesional no válido", 400);
     }
     const slots = getAvailability({ ...common, staffId });
-    return { slots: slots.map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString(), staffId })) };
+    return {
+      slots: slots.map((s) => ({
+        start: s.start.toISOString(),
+        end: s.end.toISOString(),
+        staffId,
+      })),
+    };
   }
 
   const eligible = await prisma.staffService.findMany({
@@ -138,23 +151,32 @@ export async function getPublicAvailability(slug: string, serviceId: string, dat
   if (staffIds.length === 0) return { slots: [] };
   const slots = getAvailabilityAny({ ...common, staffIds });
   return {
-    slots: slots.map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString(), staffIds: s.staffIds })),
+    slots: slots.map((s) => ({
+      start: s.start.toISOString(),
+      end: s.end.toISOString(),
+      staffIds: s.staffIds,
+    })),
   };
 }
 
 export async function createPublicAppointment(slug: string, input: CreateAppointmentInput) {
   const b = await getBusinessBySlug(slug);
-  const service = await prisma.service.findFirst({ where: { id: input.serviceId, businessId: b.id, active: true } });
+  const service = await prisma.service.findFirst({
+    where: { id: input.serviceId, businessId: b.id, active: true },
+  });
   if (!service) throw new PublicBookingError("SERVICE_INVALID", "Servicio no válido", 400);
 
   const startDate = new Date(input.startAt);
-  if (Number.isNaN(startDate.getTime())) throw new PublicBookingError("VALIDATION", "startAt inválido", 400);
+  if (Number.isNaN(startDate.getTime()))
+    throw new PublicBookingError("VALIDATION", "startAt inválido", 400);
   const dateStr = formatInTimeZone(startDate, b.timezone, "yyyy-MM-dd");
 
   // idempotencia: mismo key → devuelve existente sin duplicar
   if (input.idempotencyKey) {
     const existing = await prisma.appointment.findUnique({
-      where: { businessId_idempotencyKey: { businessId: b.id, idempotencyKey: input.idempotencyKey } },
+      where: {
+        businessId_idempotencyKey: { businessId: b.id, idempotencyKey: input.idempotencyKey },
+      },
     });
     if (existing) return { appointment: existing, deduped: true as const };
   }
@@ -167,7 +189,8 @@ export async function createPublicAppointment(slug: string, input: CreateAppoint
       orderBy: { staffId: "asc" },
     });
     staffIds = eligible.map((e) => e.staff.id);
-    if (staffIds.length === 0) throw new PublicBookingError("STAFF_INVALID", "Sin profesionales disponibles", 400);
+    if (staffIds.length === 0)
+      throw new PublicBookingError("STAFF_INVALID", "Sin profesionales disponibles", 400);
   } else {
     const link = await prisma.staffService.findUnique({
       where: { staffId_serviceId: { staffId: input.staffId, serviceId: service.id } },
@@ -189,7 +212,9 @@ export async function createPublicAppointment(slug: string, input: CreateAppoint
           const [wh, exc, appts, settings] = await Promise.all([
             tx.workingHours.findMany({ where: { businessId: b.id } }),
             tx.scheduleException.findMany({ where: { businessId: b.id, date: new Date(dateStr) } }),
-            tx.appointment.findMany({ where: { businessId: b.id, startAt: { lt: end }, blockedUntil: { gt: start } } }),
+            tx.appointment.findMany({
+              where: { businessId: b.id, startAt: { lt: end }, blockedUntil: { gt: start } },
+            }),
             tx.businessSettings.findUnique({ where: { businessId: b.id } }),
           ]);
           return {
@@ -206,7 +231,12 @@ export async function createPublicAppointment(slug: string, input: CreateAppoint
               type: e.type as "CLOSED" | "OPEN" | "BLOCKED",
               staffId: e.staffId,
             })),
-            appointments: appts.map((a) => ({ staffId: a.staffId, startAt: a.startAt, endAt: a.endAt, status: a.status })),
+            appointments: appts.map((a) => ({
+              staffId: a.staffId,
+              startAt: a.startAt,
+              endAt: a.endAt,
+              status: a.status,
+            })),
             settings: {
               slotIntervalMinutes: settings?.slotIntervalMinutes ?? 15,
               bufferMinutes: settings?.bufferMinutes ?? 0,
@@ -238,10 +268,14 @@ export async function createPublicAppointment(slug: string, input: CreateAppoint
 
         let customer = null;
         if (input.phone) {
-          customer = await tx.customer.findFirst({ where: { businessId: b.id, phone: input.phone } });
+          customer = await tx.customer.findFirst({
+            where: { businessId: b.id, phone: input.phone },
+          });
         }
         if (!customer && input.email) {
-          customer = await tx.customer.findFirst({ where: { businessId: b.id, email: input.email } });
+          customer = await tx.customer.findFirst({
+            where: { businessId: b.id, email: input.email },
+          });
         }
         if (!customer) {
           customer = await tx.customer.create({

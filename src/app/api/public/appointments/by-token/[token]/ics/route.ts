@@ -22,7 +22,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
       },
     });
   } catch (e) {
-    if (e instanceof PublicBookingError) return NextResponse.json({ error: e.code }, { status: e.status });
+    if (e instanceof PublicBookingError)
+      return NextResponse.json({ error: e.code }, { status: e.status });
     return NextResponse.json({ error: "INTERNAL" }, { status: 500 });
   }
 }

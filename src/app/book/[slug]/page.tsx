@@ -100,6 +100,15 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
     fetch(`/api/public/${slug}/availability?serviceId=${serviceId}&date=${date}&staffId=${staffId}`)
       .then((r) => r.json())
       .then((j) => {
+        if (j.error === "TRIAL_EXPIRED") {
+          setSlots([]);
+          setSlot("");
+          setMsg({
+            ok: false,
+            text: "Este negocio no está aceptando reservas ahora mismo. Contacta directamente con ellos.",
+          });
+          return;
+        }
         setSlots(j.slots ?? []);
         setSlot("");
       })
@@ -136,7 +145,9 @@ export default function BookPage({ params }: { params: Promise<{ slug: string }>
           text:
             j.error === "SLOT_TAKEN"
               ? "Ese hueco se acaba de ocupar, elige otro"
-              : "No se pudo reservar",
+              : j.error === "TRIAL_EXPIRED"
+                ? "Este negocio no está aceptando reservas ahora mismo. Contacta directamente con ellos."
+                : "No se pudo reservar",
         });
         // refresca slots tras 409
         if (j.error === "SLOT_TAKEN") {

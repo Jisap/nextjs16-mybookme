@@ -14,6 +14,7 @@ async function main() {
       slug,
       timezone: data.business.timezone,
       phone: data.business.phone,
+      trialEndsAt: new Date(Date.now() + 30 * 86400000),
     },
   });
   await prisma.businessSettings.create({

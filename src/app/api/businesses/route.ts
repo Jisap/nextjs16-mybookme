@@ -63,6 +63,7 @@ export async function POST(req: Request) {
         slug,
         phone: parsed.data.phone || null,
         timezone: "Europe/Madrid",
+        trialEndsAt: new Date(Date.now() + 30 * 86400000),
       },
     });
     await tx.businessSettings.create({ data: { businessId: b.id } });

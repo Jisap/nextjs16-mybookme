@@ -8,7 +8,7 @@ export function DashboardNav({
 }: {
   businessId: string;
   slug: string;
-  current?: "citas" | "calendario" | "servicios" | "staff" | "horarios" | "negocio";
+  current?: "citas" | "calendario" | "servicios" | "staff" | "horarios" | "negocio" | "billing";
 }) {
   const q = `?businessId=${businessId}`;
   const item = (key: string, href: string, label: string) => (
@@ -26,6 +26,7 @@ export function DashboardNav({
       {item("staff", `/dashboard/staff${q}`, "Profesionales")}
       {item("horarios", `/dashboard/schedule${q}`, "Horarios")}
       {item("negocio", `/dashboard/business${q}`, "Negocio")}
+      {item("billing", `/dashboard/billing${q}`, "Facturación")}
       <span className="mx-1 text-neutral-300" aria-hidden="true">
         |
       </span>

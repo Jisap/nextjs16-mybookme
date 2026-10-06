@@ -40,6 +40,9 @@ model Business {
   email       String?
   timezone    String   @default("Europe/Madrid")
   address     String?
+  trialEndsAt DateTime? @db.Timestamptz(6) // fin de prueba 30 días (Fase 8); null = gracia legacy
+  stripeCustomerId String? // Fase 8 facturación
+  subscriptionStatus String @default("TRIAL") // TRIAL | ACTIVE | PAST_DUE | CANCELED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

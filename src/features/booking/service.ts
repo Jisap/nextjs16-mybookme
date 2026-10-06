@@ -1,6 +1,7 @@
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/lib/db";
 import { getAvailability, getAvailabilityAny } from "@/domain/availability/engine";
+import { trialStatus } from "@/features/billing/trial";
 import type { CreateAppointmentInput } from "./schema";
 
 export class PublicBookingError extends Error {
@@ -29,6 +30,17 @@ export async function getBusinessBySlug(slug: string) {
   });
   if (!b) throw new PublicBookingError("NOT_FOUND", "Negocio no encontrado", 404);
   return b;
+}
+
+/** Bloqueo suave Fase 8: sin prueba ni suscripción no entran reservas (ver sí se puede). */
+export function requireBookable(b: { trialEndsAt: Date | null; subscriptionStatus: string }) {
+  if (trialStatus(b).state === "EXPIRED") {
+    throw new PublicBookingError(
+      "TRIAL_EXPIRED",
+      "Este negocio no está aceptando reservas ahora mismo",
+      402
+    );
+  }
 }
 
 export async function getPublicServices(slug: string) {
@@ -112,6 +124,7 @@ export async function getPublicAvailability(
   staffId: string
 ) {
   const b = await getBusinessBySlug(slug);
+  requireBookable(b);
   const service = await prisma.service.findFirst({
     where: { id: serviceId, businessId: b.id, active: true },
   });
@@ -168,6 +181,7 @@ export async function getPublicAvailability(
 
 export async function createPublicAppointment(slug: string, input: CreateAppointmentInput) {
   const b = await getBusinessBySlug(slug);
+  requireBookable(b);
   const service = await prisma.service.findFirst({
     where: { id: input.serviceId, businessId: b.id, active: true },
   });
